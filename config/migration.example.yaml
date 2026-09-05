@@ -1,0 +1,79 @@
+# =============================================================================
+# dbmigration — migration plan
+# Copy to config/migration.yaml (git-ignored) and adjust.
+#
+# Model: every source database (from every Azure subscription) is migrated into
+# ONE Supabase Postgres database. Each source database becomes a SCHEMA in the
+# target, named from `naming.schema_template`.
+# =============================================================================
+
+target:
+  # Supabase project reference (from the dashboard URL:
+  #   https://supabase.com/dashboard/project/<PROJECT_REF>/editor ).
+  supabase_project_ref: mmbxootqppuvriodzetb
+  # Assembled as db.<project_ref>.supabase.co:5432/postgres unless SUPABASE_DB_URL
+  # is set in the environment. Password comes from SUPABASE_DB_PASSWORD.
+  database: postgres
+  port: 5432
+  sslmode: require
+
+naming:
+  # How a source database maps to a target schema name.
+  # Placeholders: {subscription} {server} {db} {schema}
+  # Result is sanitized to a legal, lower-case Postgres identifier (<=63 chars).
+  schema_template: "{db}_{schema}"
+  # If two different sources sanitize to the same schema name, the pipeline
+  # aborts rather than silently merging. Set to true to disambiguate with a hash.
+  auto_disambiguate: false
+
+discovery:
+  # Which Azure subscriptions to scan. Empty list = ALL subscriptions the
+  # credential can see.
+  subscriptions: []
+  include:
+    azure_sql: true          # Azure SQL / SQL Managed Instance (MS SQL)
+    azure_postgres: true     # Azure Database for PostgreSQL (Flexible/Single)
+  # Databases to never migrate (system DBs are always excluded automatically).
+  exclude_databases:
+    - master
+    - tempdb
+    - model
+    - msdb
+    - azure_maintenance
+    - postgres
+    - azure_sys
+
+migration:
+  # What to move.
+  schema: true               # tables, columns, keys, indexes, constraints
+  data: true                 # table rows
+  routines: true             # stored procedures / functions -> PL/pgSQL
+  # Data movement.
+  batch_size: 5000           # rows per INSERT batch
+  # 'copy' (fast, uses COPY) or 'insert' (portable). COPY is default.
+  load_method: copy
+  # If a target schema already exists: 'skip', 'drop' (recreate), or 'error'.
+  on_existing_schema: error
+  # Stop the whole run on first error, or record and continue.
+  fail_fast: false
+
+routines:
+  # T-SQL -> PL/pgSQL conversion happens inline during transfer.
+  # 'convert'  : attempt conversion; on residual manual items, still emit the
+  #              best-effort function and flag it in the report.
+  # 'report'   : do not create functions; only inventory + conversion notes.
+  mode: convert
+  # Emit the original T-SQL alongside the converted body as a comment.
+  keep_original_as_comment: true
+
+# Optional explicit per-server credential / host overrides. When omitted the
+# pipeline uses the host from Azure discovery and the SRC_* env credentials.
+servers: []
+# - name: my-sqlserver.database.windows.net
+#   kind: azure_sql
+#   user: readonly_login
+#   password_env: SRC_MSSQL_PASSWORD
+
+output:
+  # Where run artifacts (the "what was transferred" record) are written.
+  dir: output

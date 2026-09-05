@@ -1,0 +1,52 @@
+[project]
+name = "dbmigration"
+version = "0.1.0"
+description = "Migrate Azure SQL (MS SQL) and Azure Database for PostgreSQL — schema, data, and stored procedures — into Supabase, with T-SQL to PL/pgSQL conversion applied inline and a full record of everything transferred."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }
+authors = [{ name = "cloudomax" }]
+
+dependencies = [
+    "pyyaml>=6.0",
+    "click>=8.1",
+    "rich>=13.7",
+    "python-dotenv>=1.0",
+    # Azure resource discovery
+    "azure-identity>=1.16",
+    "azure-mgmt-resource>=23.0",
+    "azure-mgmt-sql>=3.0",
+    "azure-mgmt-rdbms>=10.1",
+    # Source drivers
+    "pymssql>=2.3",
+    "psycopg[binary]>=3.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+dbmigrate = "dbmigration.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+# PYI034: __enter__ returning Self requires typing.Self, which is 3.11+. We keep
+# the class-name annotation so the code stays runnable on 3.10.
+ignore = ["PYI034"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
