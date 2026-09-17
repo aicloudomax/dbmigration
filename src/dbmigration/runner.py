@@ -16,6 +16,7 @@ from .naming import sanitize_identifier
 from .pipeline import (
     build_routine_conversions,
     build_schema_statements,
+    build_view_conversions,
     new_record,
     resolve_schema_for,
     resolve_source_credentials,
@@ -115,6 +116,16 @@ def migrate_one(
                     outcome.tables.append(t_out)
                     return outcome
         outcome.tables.append(t_out)
+
+    # Views (after tables/data exist so they resolve).
+    for view_outcome, ddl in build_view_conversions(plan, db):
+        if plan.migration.schema and ddl is not None:
+            try:
+                loader.execute(ddl)
+            except Exception as exc:  # noqa: BLE001
+                view_outcome.status = "error"
+                view_outcome.review_items.append(f"apply failed: {exc}")
+        outcome.views.append(view_outcome)
 
     # Foreign keys after all tables exist.
     if plan.migration.schema and fk_stmts:

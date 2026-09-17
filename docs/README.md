@@ -15,6 +15,7 @@ everything it moved.
 7. [The migration report](07-migration-report.md) — the "what was transferred" record
 8. [Operational runbook](08-runbook.md) — step-by-step for a real migration
 9. [Troubleshooting](09-troubleshooting.md) — common failures and fixes
+10. [Export-first workflow](10-export-and-load.md) — snapshot schema + data into the repo, then load
 
 ## The one-paragraph version
 

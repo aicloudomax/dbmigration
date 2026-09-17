@@ -22,6 +22,7 @@ from .report.record import (
 )
 from .transform import ddl as ddlgen
 from .transform.tsql_to_plpgsql import convert_routine
+from .transform.views import convert_view
 
 log = get_logger()
 
@@ -73,6 +74,34 @@ def resolve_schema_for(plan: Plan, db: Database, source_schema: str) -> str:
         db=db.name,
         schema=source_schema,
     )
+
+
+def schema_map_for(plan: Plan, db: Database) -> dict[str, str]:
+    """Map every source schema in the database to its target schema name."""
+    schemas = {t.schema for t in db.tables}
+    schemas |= {v.schema for v in db.views}
+    schemas |= {r.schema for r in db.routines}
+    return {s: resolve_schema_for(plan, db, s) for s in schemas}
+
+
+def build_view_conversions(plan: Plan, db: Database):
+    """Yield (ViewOutcome, ddl_or_none) for each view in the database."""
+    from .report.record import ViewOutcome
+
+    smap = schema_map_for(plan, db)
+    for view in db.views:
+        tschema = smap[view.schema]
+        conv = convert_view(view, tschema, smap, db.kind)
+        review_items = [f"{f.severity}: {f.message}" for f in conv.flags]
+        status = "created_with_review" if conv.needs_review else "created"
+        outcome = ViewOutcome(
+            source=view.qualified,
+            target_schema=tschema,
+            target_view=conv.view_name,
+            status=status,
+            review_items=review_items,
+        )
+        yield outcome, conv.ddl
 
 
 def build_schema_statements(
@@ -162,6 +191,9 @@ def migrate_database_plan(plan: Plan, db: Database) -> DatabaseOutcome:
                 notes=[],
             )
         )
+
+    for view_outcome, _ in build_view_conversions(plan, db):
+        outcome.views.append(view_outcome)
 
     if plan.migration.routines:
         for routine_outcome, _ in build_routine_conversions(plan, db):

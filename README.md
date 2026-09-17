@@ -1,9 +1,9 @@
 # dbmigration
 
 Migrate **all** databases from **all your Azure subscriptions** — Azure SQL
-(MS SQL) and Azure Database for PostgreSQL, including **stored procedures** — into
-a **single Supabase Postgres database**, and produce a complete record of
-everything that was transferred.
+(MS SQL) and Azure Database for PostgreSQL, including **tables, views, stored
+procedures, and functions** — into a **single Supabase Postgres database**, and
+produce a complete record of everything that was transferred.
 
 - **One target database, many schemas.** Every source database becomes its own
   schema in Supabase, named from a template (default `{db}_{schema}`, e.g. the
@@ -40,6 +40,23 @@ dbmigrate plan
 dbmigrate migrate
 ```
 
+### Export-first (snapshot into the repo, then load)
+
+Recommended for a controlled migration — extract to files you commit, then load:
+
+```bash
+# Phase 1: run where the DB is reachable (needs only SRC_MSSQL_* creds)
+dbmigrate export --database LiveBit \
+  --server-host coe-index-db-server.database.windows.net --kind mssql --out export
+git add export/livebit && git commit -m "Export LiveBit"
+
+# Phase 2: load the committed snapshot into Supabase
+dbmigrate load-dump export/livebit
+```
+
+See [docs/10-export-and-load.md](docs/10-export-and-load.md) and the generated
+[`examples/example-export/`](examples/example-export/).
+
 Convert a single stored procedure offline, without connecting to anything:
 
 ```bash
@@ -61,8 +78,8 @@ Azure subscriptions ──► discover ──► extract ──► transform ─
 | Stage | Module | What it does |
 | --- | --- | --- |
 | Discover | `azure/discovery.py` | Enumerate subscriptions and their SQL/PG databases |
-| Extract | `extract/mssql.py`, `extract/postgres.py` | Read schema, routines, and data into a neutral IR |
-| Transform | `transform/` | Map types, generate DDL, convert T-SQL → PL/pgSQL |
+| Extract | `extract/mssql.py`, `extract/postgres.py` | Read schema, views, routines, and data into a neutral IR |
+| Transform | `transform/` | Map types, generate DDL, convert T-SQL views + procs → Postgres |
 | Load | `load/supabase_loader.py` | Create schemas/tables, COPY data, apply functions |
 | Record | `report/record.py` | Write the Markdown + JSON migration report |
 

@@ -16,6 +16,7 @@ from ..model import (
     Routine,
     SourceKind,
     Table,
+    View,
 )
 
 _COLUMNS_SQL = """
@@ -87,6 +88,13 @@ SELECT schemaname, relname AS table_name, n_live_tup AS row_count
 FROM pg_stat_user_tables;
 """
 
+_VIEWS_SQL = """
+SELECT schemaname, viewname, definition
+FROM pg_views
+WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+ORDER BY schemaname, viewname;
+"""
+
 
 def connect(host: str, database: str, user: str, password: str, port: int = 5432):
     import psycopg  # imported lazily
@@ -133,8 +141,20 @@ def extract_database(
     _attach_row_counts(conn, tables)
 
     db.tables = list(tables.values())
+    db.views = _extract_views(conn)
     db.routines = _extract_routines(conn)
     return db
+
+
+def _extract_views(conn) -> list[View]:
+    out: list[View] = []
+    with conn.cursor() as cur:
+        cur.execute(_VIEWS_SQL)
+        for schema, name, definition in cur:
+            # pg_views.definition is the SELECT body; wrap into CREATE VIEW.
+            body = definition or ""
+            out.append(View(schema=schema, name=name, definition=body))
+    return out
 
 
 def _attach_primary_keys(conn, tables: dict[tuple[str, str], Table]) -> None:

@@ -17,6 +17,7 @@ from ..model import (
     Routine,
     SourceKind,
     Table,
+    View,
 )
 
 # Reads column metadata for every user table in the database.
@@ -101,6 +102,27 @@ WHERE o.type IN ('P', 'FN', 'IF', 'TF')  -- proc, scalar fn, inline/table fn
 ORDER BY s.name, o.name;
 """
 
+_VIEWS_SQL = """
+SELECT s.name AS schema_name, v.name AS view_name, m.definition
+FROM sys.views v
+JOIN sys.schemas s     ON s.schema_id = v.schema_id
+JOIN sys.sql_modules m ON m.object_id = v.object_id
+WHERE v.is_ms_shipped = 0
+ORDER BY s.name, v.name;
+"""
+
+_VIEW_COLUMNS_SQL = """
+SELECT s.name AS schema_name, v.name AS view_name, c.name AS column_name,
+       ty.name AS data_type, c.is_nullable, c.max_length, c.precision, c.scale,
+       c.column_id
+FROM sys.columns c
+JOIN sys.views v   ON v.object_id = c.object_id
+JOIN sys.schemas s ON s.schema_id = v.schema_id
+JOIN sys.types ty  ON ty.user_type_id = c.user_type_id
+WHERE v.is_ms_shipped = 0
+ORDER BY s.name, v.name, c.column_id;
+"""
+
 
 def connect(host: str, database: str, user: str, password: str, port: int = 1433):
     import pymssql  # imported lazily so the package installs without a live driver
@@ -157,6 +179,7 @@ def extract_database(
     _attach_row_counts(conn, tables)
 
     db.tables = list(tables.values())
+    db.views = _extract_views(conn)
     db.routines = _extract_routines(conn)
     return db
 
@@ -221,6 +244,41 @@ def _attach_row_counts(conn, tables: dict[tuple[str, str], Table]) -> None:
         key = (r["schema_name"], r["table_name"])
         if key in tables:
             tables[key].approx_row_count = int(r["row_count"] or 0)
+
+
+def _extract_views(conn) -> list[View]:
+    # Column metadata first, keyed by (schema, view).
+    cur = conn.cursor()
+    cur.execute(_VIEW_COLUMNS_SQL)
+    cols: dict[tuple[str, str], list[Column]] = {}
+    for r in _rows(cur):
+        key = (r["schema_name"], r["view_name"])
+        cols.setdefault(key, []).append(
+            Column(
+                name=r["column_name"],
+                source_type=r["data_type"],
+                nullable=bool(r["is_nullable"]),
+                char_length=r["max_length"],
+                numeric_precision=r["precision"],
+                numeric_scale=r["scale"],
+                ordinal=int(r["column_id"]),
+            )
+        )
+
+    cur = conn.cursor()
+    cur.execute(_VIEWS_SQL)
+    out: list[View] = []
+    for r in _rows(cur):
+        key = (r["schema_name"], r["view_name"])
+        out.append(
+            View(
+                schema=r["schema_name"],
+                name=r["view_name"],
+                definition=r["definition"] or "",
+                columns=cols.get(key, []),
+            )
+        )
+    return out
 
 
 def _extract_routines(conn) -> list[Routine]:

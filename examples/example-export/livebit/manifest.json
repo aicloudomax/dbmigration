@@ -1,0 +1,40 @@
+{
+  "database": "LiveBit",
+  "subscription": "(direct)",
+  "server": "coe-index-db-server.database.windows.net",
+  "kind": "azure_sql",
+  "target_schemas": [
+    "livebit_dbo",
+    "livebit_divadim"
+  ],
+  "counts": {
+    "tables": 2,
+    "views": 1,
+    "routines": 1,
+    "rows": 3
+  },
+  "tables": [
+    {
+      "source": "dbo.Customers",
+      "target_schema": "livebit_dbo",
+      "target_table": "customers",
+      "columns": 3,
+      "approx_rows": 2
+    },
+    {
+      "source": "divadim.DimDate",
+      "target_schema": "livebit_divadim",
+      "target_table": "dimdate",
+      "columns": 2,
+      "approx_rows": 1
+    }
+  ],
+  "files": [
+    "01_schema.sql",
+    "02_views.sql",
+    "03_routines.sql",
+    "data/livebit_dbo__customers.tsv",
+    "data/livebit_divadim__dimdate.tsv"
+  ],
+  "review_items": []
+}

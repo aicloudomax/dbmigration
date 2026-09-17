@@ -26,6 +26,15 @@ class TableOutcome:
 
 
 @dataclass
+class ViewOutcome:
+    source: str            # schema.view
+    target_schema: str
+    target_view: str
+    status: str            # "created", "created_with_review", "error"
+    review_items: list[str] = field(default_factory=list)
+
+
+@dataclass
 class RoutineOutcome:
     source: str            # schema.name
     target_schema: str
@@ -43,6 +52,7 @@ class DatabaseOutcome:
     database: str
     target_schema: str
     tables: list[TableOutcome] = field(default_factory=list)
+    views: list[ViewOutcome] = field(default_factory=list)
     routines: list[RoutineOutcome] = field(default_factory=list)
     errors: list[str] = field(default_factory=list)
 
@@ -70,6 +80,10 @@ class MigrationRecord:
     @property
     def total_rows(self) -> int:
         return sum(t.rows_copied or 0 for d in self.databases for t in d.tables)
+
+    @property
+    def total_views(self) -> int:
+        return sum(len(d.views) for d in self.databases)
 
     @property
     def total_routines(self) -> int:
@@ -114,6 +128,7 @@ class MigrationRecord:
             "| --- | ---: |",
             f"| Source databases | {len(self.databases)} |",
             f"| Tables | {self.total_tables} |",
+            f"| Views | {self.total_views} |",
             f"| Rows copied | {self.total_rows:,} |",
             f"| Routines | {self.total_routines} |",
             f"| Routines needing review | {self.routines_needing_review} |",
@@ -146,6 +161,21 @@ class MigrationRecord:
                     lines.append(
                         f"| `{t.source}` | `{t.target_schema}.{t.target_table}` | "
                         f"{t.columns} | {src_rows} | {copied} | {t.status} |"
+                    )
+                lines.append("")
+
+            if db.views:
+                lines += [
+                    "### Views",
+                    "",
+                    "| Source | Target view | Status | Review items |",
+                    "| --- | --- | --- | --- |",
+                ]
+                for v in db.views:
+                    review = "; ".join(v.review_items) if v.review_items else "—"
+                    lines.append(
+                        f"| `{v.source}` | `{v.target_schema}.{v.target_view}` | "
+                        f"{v.status} | {review} |"
                     )
                 lines.append("")
 

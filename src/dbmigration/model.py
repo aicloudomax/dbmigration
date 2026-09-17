@@ -67,6 +67,20 @@ class Table:
 
 
 @dataclass
+class View:
+    """A view from the source."""
+
+    schema: str
+    name: str
+    definition: str  # original CREATE VIEW / SELECT body
+    columns: list[Column] = field(default_factory=list)  # reported view columns
+
+    @property
+    def qualified(self) -> str:
+        return f"{self.schema}.{self.name}"
+
+
+@dataclass
 class Routine:
     """A stored procedure or function from the source."""
 
@@ -86,6 +100,7 @@ class Database:
     kind: SourceKind
     name: str
     tables: list[Table] = field(default_factory=list)
+    views: list[View] = field(default_factory=list)
     routines: list[Routine] = field(default_factory=list)
 
     @property
