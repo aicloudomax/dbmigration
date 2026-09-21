@@ -26,7 +26,14 @@ For each source database, `export/<db>/`:
 | `02_views.sql` | Views converted to Postgres `CREATE OR REPLACE VIEW` |
 | `03_routines.sql` | Stored procedures + functions converted to PL/pgSQL |
 | `04_foreign_keys.sql` | Foreign keys (applied last, after data) |
-| `data/<schema>__<table>.tsv` | Table rows in Postgres `COPY` text format (`\N` = NULL) |
+| `data/<schema>__<table>.sql` | **One file per table** — multi-row `INSERT` statements (default) |
+| `data/<schema>__<table>.tsv` | Alternative: table rows in Postgres `COPY` text format (`--data-format copy`) |
+
+Data format is selectable with `--data-format`:
+- `insert` (default) — a separate `.sql` of `INSERT` statements per table. Easy to
+  read, review, and run one table at a time.
+- `copy` — a compact `.tsv` per table in Postgres `COPY` text format (`\N` = NULL);
+  faster to load for large tables.
 
 Every source database becomes its own set of target schemas named
 `{db}_{schema}` — so `LiveBit`'s `dbo`, `aidd`, `diva`, `divaconfig`,

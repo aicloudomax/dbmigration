@@ -6,7 +6,12 @@ from dbmigration.config import (
     RoutinesConfig,
     TargetConfig,
 )
-from dbmigration.exporter import encode_copy_row, encode_copy_value, export_database
+from dbmigration.exporter import (
+    encode_copy_row,
+    encode_copy_value,
+    encode_sql_literal,
+    export_database,
+)
 from dbmigration.model import Column, Database, Index, Routine, SourceKind, Table, View
 
 
@@ -41,6 +46,29 @@ def test_encode_bytes_hex():
 
 def test_encode_row_joins_with_tab():
     assert encode_copy_row((1, None, "x")) == "1\t\\N\tx\n"
+
+
+# --- SQL literal encoder -----------------------------------------------------
+
+def test_sql_literal_none():
+    assert encode_sql_literal(None) == "NULL"
+
+
+def test_sql_literal_bool():
+    assert encode_sql_literal(True) == "TRUE"
+    assert encode_sql_literal(False) == "FALSE"
+
+
+def test_sql_literal_int():
+    assert encode_sql_literal(42) == "42"
+
+
+def test_sql_literal_string_escapes_quotes():
+    assert encode_sql_literal("O'Brien") == "'O''Brien'"
+
+
+def test_sql_literal_bytes():
+    assert encode_sql_literal(b"\xde\xad") == "'\\xdead'::bytea"
 
 
 # --- full export -------------------------------------------------------------
@@ -90,6 +118,26 @@ def test_export_writes_expected_tree(tmp_path):
     assert result.views == 1
     assert result.routines == 1
     assert result.rows == 2
+
+
+def test_export_insert_format(tmp_path):
+    plan = make_plan()
+    db = sample_db()
+
+    def reader(table):
+        yield [(1, "Acme"), (2, "O'Brien")]
+
+    result = export_database(plan, db, tmp_path, reader, data_format="insert")
+    sql_file = tmp_path / "livebit" / "data" / "livebit_dbo__customer.sql"
+    assert sql_file.exists()
+    text = sql_file.read_text()
+    assert 'INSERT INTO "livebit_dbo"."customer" ("id", "name") VALUES' in text
+    assert "(1, 'Acme')" in text
+    assert "(2, 'O''Brien')" in text  # quote escaped
+    assert text.rstrip().endswith(";")
+    assert result.rows == 2
+    # No .tsv when using insert format.
+    assert list((tmp_path / "livebit" / "data").glob("*.tsv")) == []
 
 
 def test_export_schema_only(tmp_path):

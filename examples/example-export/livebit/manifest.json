@@ -33,8 +33,8 @@
     "01_schema.sql",
     "02_views.sql",
     "03_routines.sql",
-    "data/livebit_dbo__customers.tsv",
-    "data/livebit_divadim__dimdate.tsv"
+    "data/livebit_dbo__customers.sql",
+    "data/livebit_divadim__dimdate.sql"
   ],
   "review_items": []
 }

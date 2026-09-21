@@ -147,7 +147,10 @@ def convert(tsql_file: Path, schema: str) -> None:
 @click.option("--kind", type=click.Choice(["mssql", "postgres"]), default="mssql")
 @click.option("--out", default="export", help="Output directory (committed to the repo).")
 @click.option("--schema-only", is_flag=True, help="Export schema/views/routines but not data.")
-def export(config: str, database: str, server_host: str, kind: str, out: str, schema_only: bool) -> None:
+@click.option("--data-format", type=click.Choice(["insert", "copy"]), default="insert",
+              help="Per-table data files: 'insert' (one .sql of INSERTs per table) or 'copy' (.tsv).")
+def export(config: str, database: str, server_host: str, kind: str, out: str,
+           schema_only: bool, data_format: str) -> None:
     """Extract a source database to on-disk files (schema + data) in the repo.
 
     Needs only the source DB credentials (SRC_* env vars) — no Azure discovery.
@@ -179,7 +182,11 @@ def export(config: str, database: str, server_host: str, kind: str, out: str, sc
         finally:
             conn.close()
 
-    result = export_database(plan_obj, db, _Path(out), None if schema_only else data_reader)
+    result = export_database(
+        plan_obj, db, _Path(out),
+        None if schema_only else data_reader,
+        data_format=data_format,
+    )
     console.print(
         f"[green]Exported[/green] to {result.out_dir}: "
         f"{result.tables} tables, {result.views} views, {result.routines} routines, "
@@ -208,6 +215,12 @@ def load_dump(dump_dir: Path, config: str) -> None:
                 conn.commit()
         data_dir = dump_dir / "data"
         if data_dir.exists():
+            # INSERT-format data files (one .sql per table).
+            for sqlf in sorted(data_dir.glob("*.sql")):
+                console.print(f"Loading {sqlf.name}")
+                conn.execute(sqlf.read_text())
+                conn.commit()
+            # COPY-format data files (one .tsv per table).
             for tsv in sorted(data_dir.glob("*.tsv")):
                 schema, table = tsv.stem.split("__", 1)
                 target = f'"{schema}"."{table}"'
