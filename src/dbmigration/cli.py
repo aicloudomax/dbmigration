@@ -4,16 +4,20 @@
     dbmigrate plan       -- dry run: show the target schema/table/routine plan
     dbmigrate migrate    -- perform the migration into Supabase
     dbmigrate convert    -- convert a single T-SQL file to PL/pgSQL (offline)
+    dbmigrate export     -- extract one database to per-object files in the repo
+    dbmigrate load-dump  -- load an export into Postgres and verify row counts
 """
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
 import click
 from dotenv import load_dotenv
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table as RichTable
 
 from .config import ConfigError, load_plan
@@ -148,10 +152,13 @@ def convert(tsql_file: Path, schema: str) -> None:
 @click.option("--out", default="export", help="Output directory (committed to the repo).")
 @click.option("--schema-only", is_flag=True, help="Export schema/views/routines but not data.")
 @click.option("--data-format", type=click.Choice(["insert", "copy"]), default="insert",
-              help="Per-table data files: 'insert' (one .sql of INSERTs per table) or 'copy' (.tsv).")
+              help="Per-table data files: 'insert' (.sql of INSERTs) or 'copy' (.tsv COPY text).")
+@click.option("--max-data-file-mb", type=click.FloatRange(min=0, min_open=True), default=45.0,
+              show_default=True,
+              help="Split a table's data into .partNNNN files so none grows past this size.")
 def export(config: str, database: str, server_host: str, kind: str, out: str,
-           schema_only: bool, data_format: str) -> None:
-    """Extract a source database to on-disk files (schema + data) in the repo.
+           schema_only: bool, data_format: str, max_data_file_mb: float) -> None:
+    """Extract a source database to per-object files (schema + data) in the repo.
 
     Needs only the source DB credentials (SRC_* env vars) — no Azure discovery.
     Run this where the database is reachable; commit the `export/` tree.
@@ -172,7 +179,7 @@ def export(config: str, database: str, server_host: str, kind: str, out: str,
         fromlist=["iter_table_rows"],
     )
 
-    console.print(f"Extracting [bold]{database}[/bold] from {server_host}...")
+    console.print(f"Extracting [bold]{escape(database)}[/bold] from {escape(server_host)}...")
     db = extract_source(src_kind, server_host, subscription="(direct)", server=server_host, database=database)
 
     def data_reader(table):
@@ -186,54 +193,115 @@ def export(config: str, database: str, server_host: str, kind: str, out: str,
         plan_obj, db, _Path(out),
         None if schema_only else data_reader,
         data_format=data_format,
+        max_data_file_mb=max_data_file_mb,
     )
-    console.print(
-        f"[green]Exported[/green] to {result.out_dir}: "
-        f"{result.tables} tables, {result.views} views, {result.routines} routines, "
-        f"{result.rows:,} rows."
-    )
+    _print_export_counts(result)
+
+
+def _print_export_counts(result) -> None:
+    table = RichTable(title=f"Exported {escape(result.database)} to {escape(str(result.out_dir))}")
+    table.add_column("Item")
+    table.add_column("Count", justify="right")
+    rows = [
+        ("Target schemas", result.schemas),
+        ("Tables", result.tables),
+        ("Views", result.views),
+        ("Procedures", result.procedures),
+        ("Functions", result.functions),
+        ("Rows", result.rows),
+        ("Data files", len(result.data_files)),
+        ("Data size (MB)", f"{result.data_bytes / (1024 * 1024):,.1f}"),
+        ("Warnings", len(result.warnings)),
+        ("Review items", len(result.review_items)),
+    ]
+    for label, value in rows:
+        table.add_row(label, f"{value:,}" if isinstance(value, int) else value)
+    console.print(table)
+    for warning in result.warnings:
+        console.print(f"[yellow]warning:[/yellow] {escape(warning)}")
     if result.review_items:
         console.print(f"[yellow]{len(result.review_items)} items flagged for review[/yellow] "
-                      f"(see manifest.json).")
+                      f"(see manifest.json and the -- REVIEW comments).")
+
+
+def _resolve_target_url(target_url: str | None, config: str) -> str:
+    """--target-url, else SUPABASE_DB_URL, else the config's target connection URL."""
+    if target_url:
+        return target_url
+    if os.environ.get("SUPABASE_DB_URL"):
+        return os.environ["SUPABASE_DB_URL"]
+    plan_obj = _load(config)
+    try:
+        return plan_obj.target.connection_url()
+    except ConfigError as exc:
+        console.print(f"[red]Config error:[/red] {escape(str(exc))}")
+        sys.exit(2)
 
 
 @main.command(name="load-dump")
-@click.argument("dump_dir", type=click.Path(exists=True, path_type=Path))
-@click.option("--config", "-c", default="config/migration.yaml")
-def load_dump(dump_dir: Path, config: str) -> None:
-    """Load a previously exported dump directory into Supabase (psycopg)."""
-    import psycopg
+@click.argument("dump_dir", type=click.Path(exists=True, file_okay=False, path_type=Path))
+@click.option("--config", "-c", default="config/migration.yaml",
+              help="Used for the target only when neither --target-url nor SUPABASE_DB_URL is set.")
+@click.option("--target-url", default=None,
+              help="Target Postgres URL (default: SUPABASE_DB_URL, then the config's target).")
+@click.option("--stop-on-error", is_flag=True, help="Stop at the first failed file or statement.")
+@click.option("--report", "report_path", type=click.Path(dir_okay=False, path_type=Path),
+              default=None, help="Where to write the JSON report (default: <dump_dir>/load_report.json).")
+def load_dump_command(dump_dir: Path, config: str, target_url: str | None,
+                      stop_on_error: bool, report_path: Path | None) -> None:
+    """Load an exported dump directory into Postgres/Supabase and verify row counts.
 
-    plan_obj = _load(config)
-    order = ["01_schema.sql", "02_views.sql", "03_routines.sql"]
-    with psycopg.connect(plan_obj.target.connection_url()) as conn:
-        for fname in order:
-            path = dump_dir / fname
-            if path.exists():
-                console.print(f"Applying {fname}...")
-                conn.execute(path.read_text())
-                conn.commit()
-        data_dir = dump_dir / "data"
-        if data_dir.exists():
-            # INSERT-format data files (one .sql per table).
-            for sqlf in sorted(data_dir.glob("*.sql")):
-                console.print(f"Loading {sqlf.name}")
-                conn.execute(sqlf.read_text())
-                conn.commit()
-            # COPY-format data files (one .tsv per table).
-            for tsv in sorted(data_dir.glob("*.tsv")):
-                schema, table = tsv.stem.split("__", 1)
-                target = f'"{schema}"."{table}"'
-                console.print(f"Loading {tsv.name} -> {target}")
-                with conn.cursor() as cur, cur.copy(f"COPY {target} FROM STDIN") as copy:
-                    copy.write(tsv.read_text())
-                conn.commit()
-        fk = dump_dir / "04_foreign_keys.sql"
-        if fk.exists():
-            console.print("Applying 04_foreign_keys.sql...")
-            conn.execute(fk.read_text())
-            conn.commit()
-    console.print("[green]Dump loaded.[/green]")
+    Follows manifest.json's load_order, one transaction per file (per statement
+    for sequences.sql and foreign_keys.sql), records every success or failure,
+    then compares each table's row count with the export. Exits 1 on any
+    failure or row-count mismatch.
+    """
+    import json
+
+    from .exporter import load_dump, redact_url
+
+    load_dotenv()
+    url = _resolve_target_url(target_url, config)
+    console.print(f"Loading [bold]{escape(str(dump_dir))}[/bold] into {escape(redact_url(url))}...")
+    report = load_dump(dump_dir, url, stop_on_error=stop_on_error)
+
+    path = report_path or dump_dir / "load_report.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    _print_load_summary(report)
+    console.print(f"Report written: {escape(str(path))}")
+    if not report["ok"]:
+        sys.exit(1)
+
+
+def _print_load_summary(report: dict) -> None:
+    from .exporter import iter_failures
+
+    table = RichTable(title="Load summary")
+    for col in ("Kind", "OK", "Failed"):
+        table.add_column(col, justify="left" if col == "Kind" else "right")
+    for kind, counts in report["by_kind"].items():
+        table.add_row(kind, f"{counts['ok']:,}", f"{counts['failed']:,}")
+    console.print(table)
+    checks = report["row_checks"]
+    matched = sum(1 for c in checks if c["match"])
+    console.print(
+        f"Row counts: {matched:,}/{len(checks):,} tables match; "
+        f"{report['totals'].get('rows_loaded', 0):,} rows loaded."
+    )
+    problems = list(iter_failures(report))
+    for line in problems[:50]:
+        console.print(f"[red]FAILED[/red] {escape(line)}")
+    if len(problems) > 50:
+        console.print(f"... and {len(problems) - 50} more (see the report).")
+    if report.get("stopped_early"):
+        console.print("[red]Stopped at the first failure (--stop-on-error).[/red]")
+    verdict = "[green]OK[/green]" if report["ok"] else "[red]FAILED[/red]"
+    totals = report["totals"]
+    console.print(
+        f"Result: {verdict} ({totals['ok']:,} ok, {totals['failed']:,} failed, "
+        f"{totals['row_mismatches']:,} row-count mismatches)"
+    )
 
 
 def _write_reports(plan_obj, record, *, prefix: str) -> None:

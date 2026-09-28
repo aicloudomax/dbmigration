@@ -16,6 +16,7 @@ everything it moved.
 8. [Operational runbook](08-runbook.md) — step-by-step for a real migration
 9. [Troubleshooting](09-troubleshooting.md) — common failures and fixes
 10. [Export-first workflow](10-export-and-load.md) — snapshot schema + data into the repo, then load
+11. [Export on GitHub Actions](11-github-actions-export.md) — run the export on a GitHub runner, validate in Postgres 16, commit the result
 
 ## The one-paragraph version
 

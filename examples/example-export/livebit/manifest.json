@@ -3,38 +3,128 @@
   "subscription": "(direct)",
   "server": "coe-index-db-server.database.windows.net",
   "kind": "azure_sql",
+  "generated_at": "2026-01-01T00:00:00Z",
+  "data_format": "insert",
+  "max_data_file_mb": 0.001,
   "target_schemas": [
     "livebit_dbo",
-    "livebit_divadim"
+    "livebit_divadim",
+    "livebit_sandbox"
   ],
   "counts": {
-    "tables": 2,
+    "schemas": 3,
+    "tables": 3,
     "views": 1,
+    "procedures": 1,
+    "functions": 0,
     "routines": 1,
-    "rows": 3
+    "rows": 44,
+    "data_files": 4,
+    "data_bytes": 2907
   },
   "tables": [
     {
       "source": "dbo.Customers",
       "target_schema": "livebit_dbo",
       "target_table": "customers",
-      "columns": 3,
-      "approx_rows": 2
+      "columns": 10,
+      "column_names": [
+        "id",
+        "name",
+        "notes",
+        "isactive",
+        "balance",
+        "externalid",
+        "updatedat",
+        "photo",
+        "profile",
+        "signupdatekey"
+      ],
+      "approx_source_rows": 4,
+      "exported_rows": 4,
+      "table_file": "tables/livebit_dbo__customers.sql",
+      "data_files": [
+        "data/livebit_dbo__customers.sql"
+      ],
+      "notes": [
+        "column UpdatedAt: datetimeoffset -> timestamptz: instant kept, original UTC offset not kept; fractional seconds rounded to microseconds",
+        "column Photo: binary length not preserved (bytea is variable length)"
+      ]
     },
     {
       "source": "divadim.DimDate",
       "target_schema": "livebit_divadim",
       "target_table": "dimdate",
-      "columns": 2,
-      "approx_rows": 1
+      "columns": 3,
+      "column_names": [
+        "datekey",
+        "fulldate",
+        "dayname"
+      ],
+      "approx_source_rows": 40,
+      "exported_rows": 40,
+      "table_file": "tables/livebit_divadim__dimdate.sql",
+      "data_files": [
+        "data/livebit_divadim__dimdate.part0001.sql",
+        "data/livebit_divadim__dimdate.part0002.sql"
+      ],
+      "notes": []
+    },
+    {
+      "source": "Sandbox.AuditLog",
+      "target_schema": "livebit_sandbox",
+      "target_table": "auditlog",
+      "columns": 3,
+      "column_names": [
+        "id",
+        "message",
+        "loggedat"
+      ],
+      "approx_source_rows": 0,
+      "exported_rows": 0,
+      "table_file": "tables/livebit_sandbox__auditlog.sql",
+      "data_files": [
+        "data/livebit_sandbox__auditlog.sql"
+      ],
+      "notes": []
     }
   ],
-  "files": [
-    "01_schema.sql",
-    "02_views.sql",
-    "03_routines.sql",
-    "data/livebit_dbo__customers.sql",
-    "data/livebit_divadim__dimdate.sql"
+  "views": [
+    {
+      "source": "dbo.v_ActiveCustomers",
+      "target": "livebit_dbo.v_activecustomers",
+      "file": "views/livebit_dbo__v_activecustomers.sql",
+      "source_file": "source/views/livebit_dbo__v_activecustomers.sql",
+      "review_items": []
+    }
   ],
-  "review_items": []
+  "routines": [
+    {
+      "source": "dbo.usp_TouchCustomer",
+      "target": "livebit_dbo.usp_touchcustomer",
+      "kind": "procedure",
+      "converted": true,
+      "file": "routines/livebit_dbo__usp_touchcustomer.sql",
+      "source_file": "source/routines/livebit_dbo__usp_touchcustomer.sql",
+      "review_items": []
+    }
+  ],
+  "warnings": [
+    "dbo.Customers: stripped 1 NUL character(s) from text values (PostgreSQL text cannot store NUL)"
+  ],
+  "review_items": [],
+  "load_order": [
+    "00_schemas.sql",
+    "tables/livebit_dbo__customers.sql",
+    "tables/livebit_divadim__dimdate.sql",
+    "tables/livebit_sandbox__auditlog.sql",
+    "data/livebit_dbo__customers.sql",
+    "data/livebit_divadim__dimdate.part0001.sql",
+    "data/livebit_divadim__dimdate.part0002.sql",
+    "data/livebit_sandbox__auditlog.sql",
+    "sequences.sql",
+    "foreign_keys.sql",
+    "views/livebit_dbo__v_activecustomers.sql",
+    "routines/livebit_dbo__usp_touchcustomer.sql"
+  ]
 }

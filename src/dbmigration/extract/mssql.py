@@ -20,24 +20,33 @@ from ..model import (
     View,
 )
 
+# Resolves a column's type to its system base type so alias types
+# (CREATE TYPE dbo.Flag FROM bit) and sysname map like their base type. CLR
+# system types (geography, geometry, hierarchyid) share one system_type_id, so
+# they keep their own name. ``ty`` = declared type, ``bt`` = its base type.
+_DATA_TYPE_EXPR = """CASE WHEN ty.user_type_id <> ty.system_type_id AND ty.is_assembly_type = 0
+         THEN COALESCE(bt.name, ty.name) ELSE ty.name END"""
+
 # Reads column metadata for every user table in the database.
-_COLUMNS_SQL = """
+_COLUMNS_SQL = f"""
 SELECT
     s.name  AS schema_name,
     t.name  AS table_name,
     c.name  AS column_name,
-    ty.name AS data_type,
+    {_DATA_TYPE_EXPR} AS data_type,
     c.is_nullable,
     c.max_length,
     c.precision,
     c.scale,
     c.is_identity,
+    c.is_computed,
     c.column_id,
     dc.definition AS default_definition
 FROM sys.columns c
 JOIN sys.tables t   ON t.object_id = c.object_id
 JOIN sys.schemas s  ON s.schema_id = t.schema_id
 JOIN sys.types ty   ON ty.user_type_id = c.user_type_id
+LEFT JOIN sys.types bt ON bt.user_type_id = ty.system_type_id
 LEFT JOIN sys.default_constraints dc ON dc.object_id = c.default_object_id
 WHERE t.is_ms_shipped = 0
 ORDER BY s.name, t.name, c.column_id;
@@ -51,10 +60,16 @@ JOIN sys.tables t  ON t.object_id = i.object_id
 JOIN sys.schemas s ON s.schema_id = t.schema_id
 JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id
 JOIN sys.columns col ON col.object_id = ic.object_id AND col.column_id = ic.column_id
-WHERE i.is_primary_key = 1 AND t.is_ms_shipped = 0
+WHERE i.is_primary_key = 1 AND ic.key_ordinal > 0 AND t.is_ms_shipped = 0
 ORDER BY s.name, t.name, ic.key_ordinal;
 """
 
+# Secondary indexes worth recreating: rowstore only (1 = clustered,
+# 2 = nonclustered; no heap/XML/spatial/columnstore), key columns only (INCLUDE
+# columns would otherwise become key columns; key_ordinal = 0 also drops the
+# partitioning column SQL Server lists for partitioned indexes), and no disabled,
+# hypothetical or filtered indexes (a filtered UNIQUE index rebuilt unfiltered
+# can reject valid data).
 _INDEX_SQL = """
 SELECT s.name AS schema_name, t.name AS table_name, i.name AS index_name,
        i.is_unique, col.name AS column_name, ic.key_ordinal
@@ -63,15 +78,25 @@ JOIN sys.tables t  ON t.object_id = i.object_id
 JOIN sys.schemas s ON s.schema_id = t.schema_id
 JOIN sys.index_columns ic ON ic.object_id = i.object_id AND ic.index_id = i.index_id
 JOIN sys.columns col ON col.object_id = ic.object_id AND col.column_id = ic.column_id
-WHERE i.is_primary_key = 0 AND i.type > 0 AND t.is_ms_shipped = 0
+WHERE i.is_primary_key = 0
+  AND i.type IN (1, 2)
+  AND ic.is_included_column = 0
+  AND ic.key_ordinal > 0
+  AND i.is_disabled = 0
+  AND i.is_hypothetical = 0
+  AND i.has_filter = 0
+  AND t.is_ms_shipped = 0
 ORDER BY s.name, t.name, i.name, ic.key_ordinal;
 """
 
 _FK_SQL = """
-SELECT fk.name AS fk_name,
+SELECT fk.object_id AS fk_id, fk.name AS fk_name,
        ps.name AS schema_name, pt.name AS table_name, pc.name AS column_name,
        rs.name AS ref_schema, rt.name AS ref_table, rc.name AS ref_column,
-       fk.delete_referential_action_desc AS on_delete
+       fk.delete_referential_action_desc AS on_delete,
+       fk.update_referential_action_desc AS on_update,
+       CAST(CASE WHEN fk.is_not_trusted = 1 OR fk.is_disabled = 1 THEN 1 ELSE 0 END AS bit)
+           AS not_trusted
 FROM sys.foreign_keys fk
 JOIN sys.foreign_key_columns fkc ON fkc.constraint_object_id = fk.object_id
 JOIN sys.tables pt  ON pt.object_id = fk.parent_object_id
@@ -80,7 +105,7 @@ JOIN sys.columns pc ON pc.object_id = fkc.parent_object_id AND pc.column_id = fk
 JOIN sys.tables rt  ON rt.object_id = fk.referenced_object_id
 JOIN sys.schemas rs ON rs.schema_id = rt.schema_id
 JOIN sys.columns rc ON rc.object_id = fkc.referenced_object_id AND rc.column_id = fkc.referenced_column_id
-ORDER BY fk.name, fkc.constraint_column_id;
+ORDER BY fk.object_id, fkc.constraint_column_id;
 """
 
 _ROWCOUNT_SQL = """
@@ -111,25 +136,65 @@ WHERE v.is_ms_shipped = 0
 ORDER BY s.name, v.name;
 """
 
-_VIEW_COLUMNS_SQL = """
+_VIEW_COLUMNS_SQL = f"""
 SELECT s.name AS schema_name, v.name AS view_name, c.name AS column_name,
-       ty.name AS data_type, c.is_nullable, c.max_length, c.precision, c.scale,
-       c.column_id
+       {_DATA_TYPE_EXPR} AS data_type,
+       c.is_nullable, c.max_length, c.precision, c.scale, c.column_id
 FROM sys.columns c
 JOIN sys.views v   ON v.object_id = c.object_id
 JOIN sys.schemas s ON s.schema_id = v.schema_id
 JOIN sys.types ty  ON ty.user_type_id = c.user_type_id
+LEFT JOIN sys.types bt ON bt.user_type_id = ty.system_type_id
 WHERE v.is_ms_shipped = 0
 ORDER BY s.name, v.name, c.column_id;
 """
 
+# sys.columns.max_length is in bytes; these types store 2 bytes per character.
+_DOUBLE_BYTE_CHAR_TYPES = frozenset({"nchar", "nvarchar"})
+
+# Types the driver cannot return as a usable Python value; each is converted to
+# text server-side. ``{c}`` is the bracket-quoted column name.
+_SELECT_CONVERSIONS: dict[str, str] = {
+    "geography": "{c}.STAsText()",
+    "geometry": "{c}.STAsText()",
+    "hierarchyid": "{c}.ToString()",
+    "sql_variant": "CAST({c} AS nvarchar(4000))",
+    "xml": "CAST({c} AS nvarchar(max))",
+}
+
 
 def connect(host: str, database: str, user: str, password: str, port: int = 1433):
+    """Open a pymssql connection suited to Azure SQL.
+
+    TDS 7.4 is required for native date/time2/datetimeoffset values and MAX
+    types; ``timeout=0`` means no query timeout so large table reads can finish.
+    """
     import pymssql  # imported lazily so the package installs without a live driver
 
     return pymssql.connect(
-        server=host, user=user, password=password, database=database, port=port
+        server=host,
+        user=user,
+        password=password,
+        database=database,
+        port=port,
+        tds_version="7.4",
+        login_timeout=30,
+        timeout=0,
+        charset="UTF-8",
     )
+
+
+def _char_length(data_type: str, max_length: int | None) -> int | None:
+    """Convert ``sys.columns.max_length`` (bytes) to a character length.
+
+    nchar/nvarchar are halved; -1 (MAX) and other types are returned unchanged.
+    """
+    if max_length is None:
+        return None
+    length = int(max_length)
+    if length > 0 and (data_type or "").lower() in _DOUBLE_BYTE_CHAR_TYPES:
+        return length // 2
+    return length
 
 
 def _rows(cursor) -> Iterator[dict[str, Any]]:
@@ -165,11 +230,12 @@ def extract_database(
                 source_type=r["data_type"],
                 nullable=bool(r["is_nullable"]),
                 default=r["default_definition"],
-                char_length=r["max_length"],
+                char_length=_char_length(r["data_type"], r["max_length"]),
                 numeric_precision=r["precision"],
                 numeric_scale=r["scale"],
                 is_identity=bool(r["is_identity"]),
                 ordinal=int(r["column_id"]),
+                is_computed=bool(r["is_computed"]),
             )
         )
 
@@ -214,10 +280,13 @@ def _attach_indexes(conn, tables: dict[tuple[str, str], Table]) -> None:
 def _attach_foreign_keys(conn, tables: dict[tuple[str, str], Table]) -> None:
     cur = conn.cursor()
     cur.execute(_FK_SQL)
-    fks: dict[str, ForeignKey] = {}
-    owner: dict[str, tuple[str, str]] = {}
+    # Keyed by object_id: FK names are only unique per schema, so two schemas can
+    # each have an FK with the same name.
+    fks: dict[int, ForeignKey] = {}
+    owner: dict[int, tuple[str, str]] = {}
     for r in _rows(cur):
-        fk = fks.get(r["fk_name"])
+        fk_id = r["fk_id"]
+        fk = fks.get(fk_id)
         if fk is None:
             fk = ForeignKey(
                 name=r["fk_name"],
@@ -226,13 +295,15 @@ def _attach_foreign_keys(conn, tables: dict[tuple[str, str], Table]) -> None:
                 ref_table=r["ref_table"],
                 ref_columns=[],
                 on_delete=_normalize_action(r["on_delete"]),
+                on_update=_normalize_action(r["on_update"]),
+                not_valid=bool(r["not_trusted"]),
             )
-            fks[r["fk_name"]] = fk
-            owner[r["fk_name"]] = (r["schema_name"], r["table_name"])
+            fks[fk_id] = fk
+            owner[fk_id] = (r["schema_name"], r["table_name"])
         fk.columns.append(r["column_name"])
         fk.ref_columns.append(r["ref_column"])
-    for name, fk in fks.items():
-        tkey = owner[name]
+    for fk_id, fk in fks.items():
+        tkey = owner[fk_id]
         if tkey in tables:
             tables[tkey].foreign_keys.append(fk)
 
@@ -258,7 +329,7 @@ def _extract_views(conn) -> list[View]:
                 name=r["column_name"],
                 source_type=r["data_type"],
                 nullable=bool(r["is_nullable"]),
-                char_length=r["max_length"],
+                char_length=_char_length(r["data_type"], r["max_length"]),
                 numeric_precision=r["precision"],
                 numeric_scale=r["scale"],
                 ordinal=int(r["column_id"]),
@@ -311,12 +382,38 @@ def _normalize_action(desc: str | None) -> str | None:
     return mapping.get(desc.upper())
 
 
+def _bq(name: str) -> str:
+    """Bracket-quote a T-SQL identifier, escaping ``]`` as ``]]``."""
+    return "[" + name.replace("]", "]]") + "]"
+
+
+def _select_expr(col: Column) -> str:
+    quoted = _bq(col.name)
+    template = _SELECT_CONVERSIONS.get((col.source_type or "").lower().strip())
+    if template is None:
+        return quoted
+    return f"{template.format(c=quoted)} AS {quoted}"
+
+
+def build_select_sql(table: Table) -> str:
+    """Return the SELECT that reads *table*'s data in column-ordinal order.
+
+    Spatial, hierarchyid, sql_variant and xml columns are converted to text
+    server-side. Rows are ordered by the primary key when there is one so
+    repeated exports produce identical output.
+    """
+    ordered_cols = sorted(table.columns, key=lambda c: c.ordinal)
+    col_list = ", ".join(_select_expr(c) for c in ordered_cols)
+    sql = f"SELECT {col_list} FROM {_bq(table.schema)}.{_bq(table.name)}"
+    if table.primary_key is not None and table.primary_key.columns:
+        sql += " ORDER BY " + ", ".join(_bq(c) for c in table.primary_key.columns)
+    return sql
+
+
 def iter_table_rows(conn, table: Table, batch_size: int) -> Iterator[list[tuple]]:
     """Yield batches of rows for a table, in column-ordinal order."""
-    ordered_cols = sorted(table.columns, key=lambda c: c.ordinal)
-    col_list = ", ".join(f"[{c.name}]" for c in ordered_cols)
     cur = conn.cursor()
-    cur.execute(f"SELECT {col_list} FROM [{table.schema}].[{table.name}]")
+    cur.execute(build_select_sql(table))
     while True:
         rows = cur.fetchmany(batch_size)
         if not rows:

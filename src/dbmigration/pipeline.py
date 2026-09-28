@@ -8,11 +8,11 @@ database is migrated into its own target schema in the single Supabase database.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from .config import Plan
 from .logging_utils import get_logger
-from .model import Database, SourceKind
+from .model import Database, SourceKind, Table
 from .naming import sanitize_identifier, target_schema_name
 from .report.record import (
     DatabaseOutcome,
@@ -104,33 +104,122 @@ def build_view_conversions(plan: Plan, db: Database):
         yield outcome, conv.ddl
 
 
+@dataclass
+class TableDDL:
+    """Everything needed to create one table in the target, in apply order.
+
+    ``create_sql`` and ``index_sqls`` run before the data load; ``fk_sqls`` and
+    ``identity_reset_sqls`` (one line each) run after all data is loaded.
+    """
+
+    table: Table
+    target_schema: str
+    target_table: str
+    create_sql: str  # one CREATE TABLE ... ; statement
+    index_sqls: list[str] = field(default_factory=list)  # CREATE [UNIQUE] INDEX ... ;
+    fk_sqls: list[str] = field(default_factory=list)  # ALTER TABLE ... FOREIGN KEY ... ;
+    identity_reset_sqls: list[str] = field(default_factory=list)  # SELECT setval(...) ... ;
+    notes: list[str] = field(default_factory=list)  # lossy mappings, dropped/skipped items
+
+
+def schema_create_statements(plan: Plan, db: Database) -> list[str]:
+    """CREATE SCHEMA for every target schema used by tables, views and routines."""
+    schemas = sorted(set(schema_map_for(plan, db).values()))
+    return [ddlgen.create_schema_ddl(s) for s in schemas]
+
+
+def _reserved_relation_names(db: Database, smap: dict[str, str]) -> dict[str, set[str]]:
+    """Relation names each target schema will hold besides our explicit indexes.
+
+    Index names must avoid these: with ``IF NOT EXISTS`` a clash silently skips
+    the later CREATE (possibly a whole table), instead of failing.
+    """
+    used: dict[str, set[str]] = {s: set() for s in smap.values()}
+    for table in db.tables:
+        names = used[smap[table.schema]]
+        tname = sanitize_identifier(table.name)
+        names.add(tname)
+        if table.primary_key and table.primary_key.columns:
+            names.add(sanitize_identifier(f"{tname}_pkey"))
+        for col in table.columns:
+            if col.is_identity:
+                names.add(sanitize_identifier(f"{tname}_{sanitize_identifier(col.name)}_seq"))
+    for view in db.views:
+        used[smap[view.schema]].add(sanitize_identifier(view.name))
+    return used
+
+
+def build_table_statements(plan: Plan, db: Database) -> list[TableDDL]:
+    """Return one :class:`TableDDL` per table, in ``db.tables`` order."""
+    smap = schema_map_for(plan, db)
+    by_key = {ddlgen.table_key(t.schema, t.name): t for t in db.tables}
+    overrides = ddlgen.bigint_overrides(db.tables, db.kind)
+    used_names = _reserved_relation_names(db, smap)
+    owners: dict[tuple[str, str], str] = {}
+
+    def ref_schema_for(source_schema: str) -> str:
+        return resolve_schema_for(plan, db, source_schema)
+
+    def lookup_table(schema: str, name: str) -> Table | None:
+        return by_key.get(ddlgen.table_key(schema, name))
+
+    result: list[TableDDL] = []
+    for table in db.tables:
+        tschema = smap[table.schema]
+        ttable = sanitize_identifier(table.name)
+        notes: list[str] = []
+        owner = owners.setdefault((tschema, ttable), table.qualified)
+        if owner != table.qualified:
+            notes.append(
+                f"target table {tschema}.{ttable} is also the target of {owner}; "
+                "CREATE TABLE IF NOT EXISTS will skip this one (rename required)"
+            )
+        type_overrides = overrides.get((table.schema, table.name))
+        create_sql = ddlgen.create_table_ddl(
+            table, tschema, db.kind, type_overrides=type_overrides, notes=notes
+        )
+        index_sqls = ddlgen.create_index_ddls(
+            table, tschema, db.kind,
+            used_names=used_names[tschema], type_overrides=type_overrides, notes=notes,
+        )
+        fk_sqls = ddlgen.foreign_key_ddls(
+            table, tschema, ref_schema_for,
+            lookup_table=lookup_table, source_kind=db.kind, notes=notes,
+        )
+        identity_reset_sqls = ddlgen.identity_reset_ddls(
+            table, tschema, db.kind, type_overrides=type_overrides
+        )
+        result.append(
+            TableDDL(
+                table=table,
+                target_schema=tschema,
+                target_table=ttable,
+                create_sql=create_sql,
+                index_sqls=index_sqls,
+                fk_sqls=fk_sqls,
+                identity_reset_sqls=identity_reset_sqls,
+                notes=notes,
+            )
+        )
+    return result
+
+
 def build_schema_statements(
     plan: Plan, db: Database
 ) -> tuple[list[str], list[str], dict[str, str]]:
     """Return (create_statements, fk_statements, table_target_schema_map).
 
-    Tables and indexes are created first; foreign keys are returned separately so
-    they can be applied after all tables exist.
+    ``create_statements`` is every CREATE SCHEMA, then each table's CREATE TABLE
+    followed by its indexes. Foreign keys are returned separately so they can be
+    applied after all tables (and their data) exist.
     """
-    create_stmts: list[str] = []
-    fk_stmts: list[str] = []
-    table_schema: dict[str, str] = {}
-    schemas_created: set[str] = set()
-
-    for table in db.tables:
-        tschema = resolve_schema_for(plan, db, table.schema)
-        table_schema[table.qualified] = tschema
-        if tschema not in schemas_created:
-            create_stmts.append(ddlgen.create_schema_ddl(tschema))
-            schemas_created.add(tschema)
-        create_stmts.append(ddlgen.create_table_ddl(table, tschema, db.kind))
-        create_stmts.extend(ddlgen.create_index_ddls(table, tschema))
-
-        for fk in table.foreign_keys:
-            # Single-schema model: references must resolve within the same DB.
-            fk_stmts.extend(ddlgen.foreign_key_ddls(table, tschema))
-            break
-
+    tables = build_table_statements(plan, db)
+    create_stmts = schema_create_statements(plan, db)
+    for t in tables:
+        create_stmts.append(t.create_sql)
+        create_stmts.extend(t.index_sqls)
+    fk_stmts = [stmt for t in tables for stmt in t.fk_sqls]
+    table_schema = {t.table.qualified: t.target_schema for t in tables}
     return create_stmts, fk_stmts, table_schema
 
 
@@ -176,19 +265,18 @@ def migrate_database_plan(plan: Plan, db: Database) -> DatabaseOutcome:
         target_schema=primary_schema,
     )
 
-    _, _, table_schema = build_schema_statements(plan, db)
-    for table in db.tables:
-        tschema = table_schema[table.qualified]
+    for tddl in build_table_statements(plan, db):
+        table = tddl.table
         outcome.tables.append(
             TableOutcome(
                 source=table.qualified,
-                target_schema=tschema,
-                target_table=sanitize_identifier(table.name),
+                target_schema=tddl.target_schema,
+                target_table=tddl.target_table,
                 columns=len(table.columns),
                 approx_source_rows=table.approx_row_count,
                 rows_copied=None,
                 status="schema_only" if not plan.migration.data else "planned",
-                notes=[],
+                notes=list(tddl.notes),
             )
         )
 

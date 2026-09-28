@@ -1,0 +1,952 @@
+# Export an Azure SQL (MS SQL) database to Postgres SQL files, prove they load
+# into a real Postgres 16, and commit the result to this repository.
+#
+# Runs on a GitHub-hosted runner because the development sandbox cannot reach
+# Azure SQL (port 1433). Full instructions: docs/11-github-actions-export.md
+#
+# Security notes:
+#   - Repository secrets are mapped to environment variables ONCE (job `env`).
+#   - `run:` scripts never interpolate ${{ }} expressions; every value reaches the
+#     shell through `env:` so inputs/request files cannot inject shell code.
+#   - Shell tracing (xtrace) is never enabled: it would echo secret-bearing variables.
+
+name: "Export LiveBit (MS SQL -> Postgres SQL files)"
+run-name: "Export ${{ github.event_name == 'workflow_dispatch' && inputs.database || 'from migration request' }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      database:
+        description: "Source database name on the SQL server"
+        type: string
+        required: true
+        default: LiveBit
+      server_host:
+        description: "Source SQL server host name"
+        type: string
+        required: true
+        default: coe-index-db-server.database.windows.net
+      schema_only:
+        description: "Export schema, views and routines only (no table data)"
+        type: boolean
+        default: false
+      commit_results:
+        description: "Commit the export (export/<db>/) back to this branch"
+        type: boolean
+        default: true
+      max_commit_mb:
+        description: "If export/<db>/ is larger than this (MB), data/ is not committed (artifact only)"
+        type: string
+        default: "1800"
+  push:
+    paths:
+      - "migration-requests/*.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  export:
+    name: Export, validate and commit
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+
+    services:
+      # Throwaway Postgres used only to prove the generated SQL really loads.
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+          --shm-size 1g
+
+    env:
+      # Repository secrets -> environment, mapped exactly once. Never echo these.
+      SRC_MSSQL_USER: ${{ secrets.SRC_MSSQL_USER }}
+      SRC_MSSQL_PASSWORD: ${{ secrets.SRC_MSSQL_PASSWORD }}
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      # The throwaway validation database above (not a real credential).
+      VALIDATION_DB_URL: postgresql://postgres:postgres@localhost:5432/postgres
+      # Split per-table data files so no committed file nears GitHub's 100 MB limit.
+      MAX_DATA_FILE_MB: "45"
+      PYTHONUNBUFFERED: "1"
+      COLUMNS: "200"
+
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Check required secrets
+        run: |
+          missing=()
+          [ -n "${SRC_MSSQL_USER:-}" ] || missing+=("SRC_MSSQL_USER")
+          [ -n "${SRC_MSSQL_PASSWORD:-}" ] || missing+=("SRC_MSSQL_PASSWORD")
+          if [ "${#missing[@]}" -gt 0 ]; then
+            settings_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/settings/secrets/actions"
+            msg="Required secret(s) not set: ${missing[*]}."
+            msg+=" Add them in GitHub: repository Settings -> Secrets and variables -> Actions"
+            msg+=" -> New repository secret (${settings_url})."
+            msg+=" Use the SQL login (user name and password) that can read the source database."
+            echo "::error title=Missing repository secrets::${msg}"
+            exit 1
+          fi
+          echo "SRC_MSSQL_USER and SRC_MSSQL_PASSWORD are set."
+          if [ -n "${AZURE_CLIENT_ID:-}" ]; then
+            echo "AZURE_CLIENT_ID is set: a temporary SQL firewall rule will be opened for this runner."
+          else
+            echo "AZURE_* secrets not set: no firewall rule will be opened (the SQL server must already allow Azure services)."
+          fi
+
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: pyproject.toml
+
+      - name: Install dbmigration
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .
+          dbmigrate --help > /dev/null
+          echo "dbmigrate is installed."
+
+      - name: Resolve run parameters
+        id: cfg
+        env:
+          IN_DATABASE: ${{ inputs.database }}
+          IN_SERVER_HOST: ${{ inputs.server_host }}
+          IN_SCHEMA_ONLY: ${{ inputs.schema_only }}
+          IN_COMMIT_RESULTS: ${{ inputs.commit_results }}
+          IN_MAX_COMMIT_MB: ${{ inputs.max_commit_mb }}
+          DEFAULT_DATABASE: LiveBit
+          DEFAULT_SERVER_HOST: coe-index-db-server.database.windows.net
+          DEFAULT_SCHEMA_ONLY: "false"
+          DEFAULT_COMMIT_RESULTS: "true"
+          DEFAULT_MAX_COMMIT_MB: "1800"
+        run: |
+          fail() { echo "::error title=Invalid run parameters::$1"; exit 1; }
+
+          # Normalise a boolean-ish value; empty -> default ($2).
+          norm_bool() {
+            local v="${1,,}"
+            case "$v" in
+              true|1|yes|y|on) echo true ;;
+              false|0|no|n|off) echo false ;;
+              "") echo "$2" ;;
+              *) return 1 ;;
+            esac
+          }
+
+          # Read one key from the request JSON. Missing or null -> "" (so the
+          # default applies). A JSON `false` is preserved as "false".
+          req_key() {
+            jq -r --arg k "$1" 'if has($k) and .[$k] != null then .[$k] | tostring else "" end' "$request"
+          }
+
+          trigger="${GITHUB_EVENT_NAME}"
+          request=""
+          database="" server_host="" schema_only="" commit_results="" max_commit_mb=""
+
+          if [ "$trigger" = "push" ]; then
+            # Newest commit in the push that added/modified a request file; within
+            # that commit the lexicographically last file wins.
+            newest='[.commits[]?
+              | [((.added // []) + (.modified // []))[]
+                 | select(test("^migration-requests/[^/]+\\.json$"))]
+              | select(length > 0) | sort | last] | last // empty'
+            request="$(jq -r "$newest" "$GITHUB_EVENT_PATH")"
+            if [ -z "$request" ] || [ ! -f "$request" ]; then
+              # Payload had no usable file (e.g. truncated commit list): fall back
+              # to the lexicographically last request file in the checkout.
+              request=""
+              if [ -d migration-requests ]; then
+                request="$(find migration-requests -maxdepth 1 -type f -name '*.json' | LC_ALL=C sort | tail -n 1)"
+              fi
+            fi
+            if [ -n "$request" ]; then
+              jq -e 'type == "object"' "$request" > /dev/null 2>&1 \
+                || fail "Request file ${request} is not a JSON object. Expected e.g. {\"database\": \"LiveBit\", \"schema_only\": false}."
+              echo "Using migration request: ${request}"
+              database="$(req_key database)"
+              server_host="$(req_key server_host)"
+              schema_only="$(req_key schema_only)"
+              commit_results="$(req_key commit_results)"
+              max_commit_mb="$(req_key max_commit_mb)"
+            else
+              echo "::warning::No migration-requests/*.json file found; using default parameters."
+            fi
+          else
+            database="${IN_DATABASE}"
+            server_host="${IN_SERVER_HOST}"
+            schema_only="${IN_SCHEMA_ONLY}"
+            commit_results="${IN_COMMIT_RESULTS}"
+            max_commit_mb="${IN_MAX_COMMIT_MB}"
+          fi
+
+          database="${database:-$DEFAULT_DATABASE}"
+          server_host="${server_host:-$DEFAULT_SERVER_HOST}"
+          max_commit_mb="${max_commit_mb:-$DEFAULT_MAX_COMMIT_MB}"
+          schema_only="$(norm_bool "$schema_only" "$DEFAULT_SCHEMA_ONLY")" \
+            || fail "schema_only must be true or false."
+          commit_results="$(norm_bool "$commit_results" "$DEFAULT_COMMIT_RESULTS")" \
+            || fail "commit_results must be true or false."
+
+          re_db='^[A-Za-z0-9_][A-Za-z0-9_-]{0,127}$'
+          re_host='^[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?(\.[A-Za-z0-9]([A-Za-z0-9-]*[A-Za-z0-9])?)*$'
+          [[ "$database" =~ $re_db ]] \
+            || fail "database must be letters, digits, '_' or '-' (got an unsupported value)."
+          [[ "$server_host" =~ $re_host ]] && [ "${#server_host}" -le 253 ] \
+            || fail "server_host must be a host name such as coe-index-db-server.database.windows.net."
+          [[ "$max_commit_mb" =~ ^[0-9]{1,6}$ ]] && [ "$max_commit_mb" -gt 0 ] \
+            || fail "max_commit_mb must be a positive whole number of megabytes."
+
+          db_sanitized="$(python3 -c 'import sys; from dbmigration.naming import sanitize_identifier as s; print(s(sys.argv[1]))' "$database")"
+          [[ "$db_sanitized" =~ ^[a-z0-9_]+$ ]] || fail "Could not derive the export directory name."
+          server_name="${server_host%%.*}"
+          server_name="${server_name,,}"
+
+          {
+            echo "trigger=${trigger}"
+            echo "request_file=${request}"
+            echo "database=${database}"
+            echo "server_host=${server_host}"
+            echo "server_name=${server_name}"
+            echo "schema_only=${schema_only}"
+            echo "commit_results=${commit_results}"
+            echo "max_commit_mb=${max_commit_mb}"
+            echo "db_sanitized=${db_sanitized}"
+            echo "db_dir=export/${db_sanitized}"
+          } >> "$GITHUB_OUTPUT"
+
+          echo "trigger=${trigger} request=${request:-<none>}"
+          echo "database=${database} server_host=${server_host} (server ${server_name})"
+          echo "schema_only=${schema_only} commit_results=${commit_results} max_commit_mb=${max_commit_mb}"
+          echo "output directory: export/${db_sanitized}"
+
+      - name: Free runner disk space
+        if: steps.cfg.outputs.schema_only != 'true'
+        continue-on-error: true
+        run: |
+          df -h /
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL || true
+          df -h /
+
+      - name: Detect runner public IP
+        id: ip
+        run: |
+          ip=""
+          for url in https://api.ipify.org https://checkip.amazonaws.com https://ifconfig.me/ip; do
+            candidate="$(curl -s --max-time 15 --retry 2 "$url" | tr -d '[:space:]' || true)"
+            if [[ "$candidate" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then
+              ip="$candidate"
+              break
+            fi
+          done
+          if [ -z "$ip" ]; then
+            echo "::warning::Could not detect the runner's public IPv4 address."
+            ip="unknown"
+          fi
+          echo "ip=${ip}" >> "$GITHUB_OUTPUT"
+          echo "Runner public IP: ${ip}"
+
+      - name: Azure login (optional, for a temporary SQL firewall rule)
+        id: azlogin
+        if: env.AZURE_CLIENT_ID != ''
+        continue-on-error: true
+        uses: azure/login@v2
+        with:
+          creds: ${{ format('{{"clientId":"{0}","clientSecret":"{1}","subscriptionId":"{2}","tenantId":"{3}"}}', env.AZURE_CLIENT_ID, env.AZURE_CLIENT_SECRET, env.AZURE_SUBSCRIPTION_ID, env.AZURE_TENANT_ID) }}
+          allow-no-subscriptions: true
+
+      - name: Open temporary SQL firewall rule for this runner (optional)
+        id: fw
+        if: env.AZURE_CLIENT_ID != ''
+        continue-on-error: true
+        env:
+          AZLOGIN_OUTCOME: ${{ steps.azlogin.outcome }}
+          RUNNER_IP: ${{ steps.ip.outputs.ip }}
+          SQL_SERVER_NAME: ${{ steps.cfg.outputs.server_name }}
+        run: |
+          # Outputs are written exactly once, on exit, whatever happens below.
+          rule_created=false rg="" sub="" rule=""
+          write_outputs() {
+            {
+              echo "rule_created=${rule_created}"
+              echo "rg=${rg}"
+              echo "subscription=${sub}"
+              echo "rule_name=${rule}"
+            } >> "$GITHUB_OUTPUT"
+          }
+          trap write_outputs EXIT
+
+          if [ "${AZLOGIN_OUTCOME}" != "success" ]; then
+            echo "::warning::Azure login failed, so no temporary firewall rule was opened." \
+              "Check the AZURE_* secrets. Continuing: the connection works only if the SQL server" \
+              "already allows this runner."
+            exit 0
+          fi
+          if ! [[ "${RUNNER_IP}" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then
+            echo "::warning::Runner IP unknown, so no temporary firewall rule was opened."
+            exit 0
+          fi
+
+          # The configured subscription first, then every subscription visible to
+          # the service principal (the server may live in another one).
+          subs=()
+          if [ -n "${AZURE_SUBSCRIPTION_ID:-}" ]; then
+            subs+=("${AZURE_SUBSCRIPTION_ID}")
+          fi
+          mapfile -t -O "${#subs[@]}" subs < <(az account list --query "[].id" -o tsv 2> /dev/null || true)
+
+          for s in "${subs[@]}"; do
+            [ -n "$s" ] || continue
+            found="$(az sql server list --subscription "$s" --query "[?name=='${SQL_SERVER_NAME}'].resourceGroup | [0]" -o tsv 2> /dev/null || true)"
+            found="$(printf '%s' "$found" | tr -d '[:space:]')"
+            if [ -n "$found" ] && [ "$found" != "None" ]; then
+              rg="$found"
+              sub="$s"
+              break
+            fi
+          done
+          if [ -z "$rg" ]; then
+            echo "::warning::SQL server '${SQL_SERVER_NAME}' was not found in any subscription the" \
+              "service principal can read (it needs Reader + SQL Server Contributor on the server)." \
+              "No firewall rule was opened."
+            exit 0
+          fi
+
+          rule="gh-runner-${GITHUB_RUN_ID}"
+          if az sql server firewall-rule create \
+              --subscription "$sub" --resource-group "$rg" --server "${SQL_SERVER_NAME}" \
+              --name "$rule" --start-ip-address "${RUNNER_IP}" --end-ip-address "${RUNNER_IP}" \
+              --output none; then
+            rule_created=true
+            echo "Opened firewall rule ${rule} for ${RUNNER_IP} on ${SQL_SERVER_NAME} (resource group ${rg})."
+          else
+            echo "::warning::Could not create firewall rule ${rule} on ${SQL_SERVER_NAME}" \
+              "(resource group ${rg}); the service principal probably lacks 'SQL Server Contributor'." \
+              "Continuing without it."
+          fi
+
+      - name: Check SQL Server connectivity
+        id: connect
+        env:
+          DB_HOST: ${{ steps.cfg.outputs.server_host }}
+          DB_NAME: ${{ steps.cfg.outputs.database }}
+          RUNNER_IP: ${{ steps.ip.outputs.ip }}
+          # A new firewall rule can take a few minutes to apply: retry longer then.
+          CONNECT_ATTEMPTS: ${{ steps.fw.outputs.rule_created == 'true' && '10' || '3' }}
+          CONNECT_RETRY_SECONDS: "30"
+        run: |
+          python3 - <<'PY'
+          import os
+          import sys
+          import time
+
+          import pymssql
+
+          host = os.environ["DB_HOST"]
+          database = os.environ["DB_NAME"]
+          runner_ip = os.environ.get("RUNNER_IP") or "unknown"
+          attempts = max(1, int(os.environ.get("CONNECT_ATTEMPTS") or "3"))
+          delay = float(os.environ.get("CONNECT_RETRY_SECONDS") or "30")
+
+
+          def annotation(text: str) -> str:
+              return text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+
+
+          last_error = ""
+          for attempt in range(1, attempts + 1):
+              try:
+                  conn = pymssql.connect(
+                      server=host,
+                      user=os.environ["SRC_MSSQL_USER"],
+                      password=os.environ["SRC_MSSQL_PASSWORD"],
+                      database=database,
+                      port=1433,
+                      tds_version="7.4",
+                      login_timeout=30,
+                      charset="UTF-8",
+                  )
+                  try:
+                      cur = conn.cursor()
+                      cur.execute("SELECT @@VERSION, DB_NAME()")
+                      version, current_db = cur.fetchone()
+                  finally:
+                      conn.close()
+                  print(f"Connected to {host}, database {current_db}.")
+                  print(str(version).splitlines()[0])
+                  sys.exit(0)
+              except Exception as exc:  # noqa: BLE001 - report any driver error
+                  last_error = " ".join(str(exc).split())[:600]
+                  print(f"Attempt {attempt}/{attempts} failed: {last_error}")
+                  if attempt < attempts:
+                      time.sleep(delay)
+
+          message = (
+              f"Cannot connect to {host} (database {database}) from this GitHub runner, "
+              f"public IP {runner_ip}. Last error: {last_error}\n"
+              "Fix ONE of these, then re-run the workflow:\n"
+              "(1) enable 'Allow Azure services and resources to access this server' on the "
+              "SQL server Networking page in the Azure portal, or\n"
+              "(2) add the AZURE_* secrets (AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, AZURE_TENANT_ID, "
+              "AZURE_SUBSCRIPTION_ID) so the workflow opens a temporary firewall rule for the runner IP."
+          )
+          print(f"::error title=SQL Server not reachable::{annotation(message)}")
+          lowered = last_error.lower()
+          if "18456" in lowered or "login failed" in lowered:
+              print(
+                  "::error title=SQL login failed::The server was reached but rejected the login. "
+                  "Check the SRC_MSSQL_USER and SRC_MSSQL_PASSWORD repository secrets."
+              )
+          elif "4060" in lowered or "cannot open database" in lowered:
+              print(
+                  f"::error title=Database not found::The server was reached but database "
+                  f"'{database}' could not be opened. Check the database name and the login's access."
+              )
+          sys.exit(1)
+          PY
+
+      - name: Prepare config
+        run: |
+          if [ ! -f config/migration.yaml ]; then
+            cp config/migration.example.yaml config/migration.yaml
+          fi
+          echo "Using config/migration.yaml (git-ignored, never committed)."
+
+      - name: Export database to SQL files
+        id: export
+        env:
+          DB_HOST: ${{ steps.cfg.outputs.server_host }}
+          DB_NAME: ${{ steps.cfg.outputs.database }}
+          DB_DIR: ${{ steps.cfg.outputs.db_dir }}
+          SCHEMA_ONLY: ${{ steps.cfg.outputs.schema_only }}
+        run: |
+          case "$DB_DIR" in
+            export/?*) ;;
+            *) echo "::error::Unexpected export directory '${DB_DIR}'."; exit 1 ;;
+          esac
+          # Start clean: the exporter never deletes files, and a stale table or
+          # data file from an older export must not be committed or loaded.
+          rm -rf -- "$DB_DIR"
+
+          args=(export --database "$DB_NAME" --server-host "$DB_HOST" --kind mssql
+                --out export --data-format insert --max-data-file-mb "$MAX_DATA_FILE_MB"
+                -c config/migration.yaml)
+          if [ "$SCHEMA_ONLY" = "true" ]; then
+            args+=(--schema-only)
+          fi
+          dbmigrate "${args[@]}"
+
+          if [ ! -f "$DB_DIR/manifest.json" ]; then
+            echo "::error::Export finished but ${DB_DIR}/manifest.json is missing."
+            exit 1
+          fi
+          echo "Export written to ${DB_DIR}:"
+          du -sh -- "$DB_DIR"
+
+      - name: Remove temporary SQL firewall rule
+        if: always() && steps.fw.outputs.rule_created == 'true'
+        continue-on-error: true
+        env:
+          FW_SUBSCRIPTION: ${{ steps.fw.outputs.subscription }}
+          FW_RG: ${{ steps.fw.outputs.rg }}
+          FW_RULE: ${{ steps.fw.outputs.rule_name }}
+          SQL_SERVER_NAME: ${{ steps.cfg.outputs.server_name }}
+        run: |
+          if az sql server firewall-rule delete --subscription "$FW_SUBSCRIPTION" \
+              --resource-group "$FW_RG" --server "$SQL_SERVER_NAME" --name "$FW_RULE" --output none; then
+            echo "Removed firewall rule ${FW_RULE}."
+          else
+            echo "::warning::Could not remove firewall rule ${FW_RULE} on ${SQL_SERVER_NAME}. Delete it manually: Azure portal -> SQL server -> Networking -> Firewall rules."
+            exit 1
+          fi
+
+      - name: Validate - load the export into Postgres 16
+        id: validate
+        continue-on-error: true
+        env:
+          DB_DIR: ${{ steps.cfg.outputs.db_dir }}
+        run: |
+          report="$DB_DIR/validation_report.json"
+          rm -f -- "$report"
+          dbmigrate load-dump "$DB_DIR" --target-url "$VALIDATION_DB_URL" --report "$report" \
+            -c config/migration.yaml
+
+      # Only after the export step actually ran (it wipes export/<db>/ first):
+      # otherwise the directory holds the previously committed export.
+      - name: Measure export
+        id: size
+        if: always() && (steps.export.outcome == 'success' || steps.export.outcome == 'failure')
+        env:
+          DB_DIR: ${{ steps.cfg.outputs.db_dir }}
+        run: |
+          if [ -d "$DB_DIR" ]; then
+            size_mb="$(du -sm -- "$DB_DIR" | cut -f1)"
+            data_mb=0
+            data_files=0
+            if [ -d "$DB_DIR/data" ]; then
+              data_mb="$(du -sm -- "$DB_DIR/data" | cut -f1)"
+              data_files="$(find "$DB_DIR/data" -type f | wc -l | tr -d ' ')"
+            fi
+            {
+              echo "exists=true"
+              echo "size_mb=${size_mb}"
+              echo "data_mb=${data_mb}"
+              echo "data_files=${data_files}"
+            } >> "$GITHUB_OUTPUT"
+            echo "${DB_DIR}: ${size_mb} MB total, data/ ${data_mb} MB in ${data_files} files."
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+            echo "${DB_DIR} does not exist."
+          fi
+
+      - name: Write job summary
+        if: always() && steps.cfg.outcome == 'success'
+        continue-on-error: true
+        env:
+          DB_NAME: ${{ steps.cfg.outputs.database }}
+          DB_HOST: ${{ steps.cfg.outputs.server_host }}
+          DB_DIR: ${{ steps.cfg.outputs.db_dir }}
+          SCHEMA_ONLY: ${{ steps.cfg.outputs.schema_only }}
+          TRIGGER: ${{ steps.cfg.outputs.trigger }}
+          REQUEST_FILE: ${{ steps.cfg.outputs.request_file }}
+          COMMIT_RESULTS: ${{ steps.cfg.outputs.commit_results }}
+          MAX_COMMIT_MB: ${{ steps.cfg.outputs.max_commit_mb }}
+          RUNNER_IP: ${{ steps.ip.outputs.ip }}
+          FIREWALL_RULE: ${{ steps.fw.outputs.rule_created }}
+          CONNECT_OUTCOME: ${{ steps.connect.outcome }}
+          EXPORT_OUTCOME: ${{ steps.export.outcome }}
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
+          SIZE_MB: ${{ steps.size.outputs.size_mb }}
+          DATA_MB: ${{ steps.size.outputs.data_mb }}
+          DATA_FILES: ${{ steps.size.outputs.data_files }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          env = os.environ
+          db_dir = Path(env["DB_DIR"])
+          lines: list[str] = []
+
+
+          def cell(value, limit: int = 300) -> str:
+              text = " ".join(str(value).split())
+              if len(text) > limit:
+                  text = text[: limit - 3] + "..."
+              return text.replace("|", "\\|")
+
+
+          def as_int(value) -> int:
+              try:
+                  return int(value)
+              except (TypeError, ValueError):
+                  return 0
+
+
+          def load(name: str):
+              path = db_dir / name
+              if not path.is_file():
+                  return None
+              try:
+                  return json.loads(path.read_text(encoding="utf-8"))
+              except (OSError, ValueError) as exc:
+                  lines.append(f"> Could not read `{path}`: {cell(exc)}")
+                  return None
+
+
+          def outcome(key: str) -> str:
+              return {"success": "passed", "failure": "FAILED", "cancelled": "cancelled"}.get(
+                  env.get(key, ""), "not run"
+              )
+
+
+          def failure_text(item) -> str:
+              if isinstance(item, dict):
+                  where = next(
+                      (item[k] for k in ("file", "step", "object", "table", "name") if item.get(k)), ""
+                  )
+                  what = next(
+                      (item[k] for k in ("error", "message", "detail", "reason") if item.get(k)), ""
+                  )
+                  return f"`{cell(where, 120)}`: {cell(what)}" if where else cell(what or item)
+              return cell(item)
+
+
+          def validation_failures(report: dict) -> list:
+              for key in ("failures", "errors", "failed"):
+                  if isinstance(report.get(key), list):
+                      return report[key]
+              found = []
+              for key in ("steps", "files", "results", "tables"):
+                  for item in report.get(key) or []:
+                      if isinstance(item, dict) and (
+                          item.get("ok") is False
+                          or str(item.get("status", "")).lower() in ("failed", "failure", "error")
+                      ):
+                          found.append(item)
+              return found
+
+
+          def row_mismatches(report: dict) -> list[str]:
+              # load-dump writes row_checks: [{table, source, expected, actual, match}]
+              out = []
+              for item in report.get("row_checks") or []:
+                  if not isinstance(item, dict) or item.get("match") is True:
+                      continue
+                  name = item.get("table") or item.get("source") or "?"
+                  detail = f"expected {item.get('expected')}, loaded {item.get('actual')}"
+                  if item.get("error"):
+                      detail += f" ({cell(item['error'], 160)})"
+                  out.append(f"`{cell(name, 120)}`: {detail}")
+              return out
+
+
+          mode = "schema only (no table data)" if env.get("SCHEMA_ONLY") == "true" else "schema + data"
+          lines.append(f"## Export `{cell(env['DB_NAME'])}` from `{cell(env['DB_HOST'])}`")
+          lines.append("")
+          trigger = env.get("TRIGGER") or "?"
+          if env.get("REQUEST_FILE"):
+              trigger += f" (`{cell(env['REQUEST_FILE'])}`)"
+          lines.append(f"- Mode: **{mode}**")
+          lines.append(f"- Trigger: {trigger}")
+          fw = "opened and removed" if env.get("FIREWALL_RULE") == "true" else "not used"
+          lines.append(f"- Runner IP: `{cell(env.get('RUNNER_IP') or 'unknown')}` (temporary firewall rule: {fw})")
+          lines.append("")
+          lines.append("| Step | Result |")
+          lines.append("| --- | --- |")
+          lines.append(f"| SQL Server connectivity | {outcome('CONNECT_OUTCOME')} |")
+          lines.append(f"| Export | {outcome('EXPORT_OUTCOME')} |")
+          lines.append(f"| Validation load into Postgres 16 | {outcome('VALIDATE_OUTCOME')} |")
+          lines.append("")
+
+          # export/<db>/ is wiped by the export step, so files there belong to this
+          # run only if that step ran; otherwise they are the last committed export.
+          export_ran = env.get("EXPORT_OUTCOME") in ("success", "failure")
+          manifest = load("manifest.json") if export_ran else None
+          if not export_ran:
+              lines.append("**The export did not run** (an earlier step failed), so nothing is committed.")
+              lines.append("")
+          elif not isinstance(manifest, dict):
+              lines.append(f"**No `{db_dir}/manifest.json`**: the export did not complete, so nothing is committed.")
+              lines.append("")
+          else:
+              counts = manifest.get("counts") or {}
+              schemas = manifest.get("target_schemas") or []
+              review = manifest.get("review_items") or []
+              lines.append("### Exported")
+              lines.append("")
+              lines.append("| Tables | Views | Routines | Rows | Target schemas | Review items |")
+              lines.append("| ---: | ---: | ---: | ---: | ---: | ---: |")
+              lines.append(
+                  f"| {as_int(counts.get('tables')):,} | {as_int(counts.get('views')):,} "
+                  f"| {as_int(counts.get('routines')):,} | {as_int(counts.get('rows')):,} "
+                  f"| {len(schemas)} | {len(review)} |"
+              )
+              lines.append("")
+
+              per_schema: dict[str, dict] = {s: {"tables": 0, "columns": 0, "approx": 0, "rows": None}
+                                             for s in schemas}
+              for table in manifest.get("tables") or []:
+                  if not isinstance(table, dict):
+                      continue
+                  entry = per_schema.setdefault(
+                      table.get("target_schema") or "?",
+                      {"tables": 0, "columns": 0, "approx": 0, "rows": None},
+                  )
+                  entry["tables"] += 1
+                  entry["columns"] += as_int(table.get("columns"))
+                  entry["approx"] += as_int(table.get("approx_source_rows"))
+                  if isinstance(table.get("exported_rows"), int):
+                      entry["rows"] = (entry["rows"] or 0) + table["exported_rows"]
+              if per_schema:
+                  has_rows = any(e["rows"] is not None for e in per_schema.values())
+                  header = "| Target schema | Tables | Columns | Approx. source rows |"
+                  rule = "| --- | ---: | ---: | ---: |"
+                  if has_rows:
+                      header += " Exported rows |"
+                      rule += " ---: |"
+                  lines += ["### Tables per schema", "", header, rule]
+                  for name in sorted(per_schema):
+                      e = per_schema[name]
+                      row = f"| `{cell(name)}` | {e['tables']:,} | {e['columns']:,} | {e['approx']:,} |"
+                      if has_rows:
+                          row += f" {e['rows'] or 0:,} |"
+                      lines.append(row)
+                  lines.append("")
+
+              if review:
+                  lines.append(f"### Review items: {len(review)}")
+                  lines.append("")
+                  lines.append("Flagged by the converter; see `review_items` in manifest.json and `-- REVIEW:` comments.")
+                  lines.append("")
+                  lines.append("<details><summary>Show the first 50</summary>")
+                  lines.append("")
+                  lines += [f"- {cell(item)}" for item in review[:50]]
+                  lines.append("")
+                  lines.append("</details>")
+                  lines.append("")
+              else:
+                  lines.append("### Review items: 0")
+                  lines.append("")
+
+          lines.append("### Validation (load-dump into Postgres 16)")
+          lines.append("")
+          validate = env.get("VALIDATE_OUTCOME", "")
+          report = load("validation_report.json") if validate in ("success", "failure") else None
+          if not isinstance(report, dict):
+              if validate == "failure":
+                  lines.append("**FAILED** before writing `validation_report.json`; see the *Validate* step log.")
+              elif validate == "success":
+                  lines.append("Passed (no `validation_report.json` was written).")
+              else:
+                  lines.append("Not run (an earlier step failed).")
+          else:
+              failures = validation_failures(report)
+              mismatches = row_mismatches(report)
+              ok = next((report[k] for k in ("ok", "success", "passed") if isinstance(report.get(k), bool)), None)
+              if ok is None and isinstance(report.get("status"), str):
+                  ok = report["status"].lower() in ("ok", "passed", "success", "succeeded")
+              if ok is None:
+                  ok = not failures and not mismatches
+              if validate == "failure":
+                  ok = False
+              lines.append(f"Result: **{'PASSED' if ok else 'FAILED'}** "
+                           f"(`{db_dir}/validation_report.json`)")
+              lines.append("")
+              scalars = {k: v for k, v in report.items()
+                         if isinstance(v, (str, int, float, bool)) and v is not None}
+              if scalars:
+                  lines += ["| Field | Value |", "| --- | --- |"]
+                  lines += [f"| {cell(k, 80)} | {cell(v, 200)} |" for k, v in scalars.items()]
+                  lines.append("")
+              by_kind = report.get("by_kind")
+              if isinstance(by_kind, dict) and by_kind:
+                  lines += ["| Object kind | Loaded OK | Failed |", "| --- | ---: | ---: |"]
+                  for kind, res in by_kind.items():
+                      if isinstance(res, dict):
+                          lines.append(f"| {cell(kind, 40)} | {as_int(res.get('ok')):,} "
+                                       f"| {as_int(res.get('failed')):,} |")
+                  lines.append("")
+              if failures:
+                  lines.append(f"**{len(failures)} failure(s)** (first 50):")
+                  lines.append("")
+                  lines += [f"- {failure_text(f)}" for f in failures[:50]]
+                  lines.append("")
+              if mismatches:
+                  lines.append(f"**{len(mismatches)} row-count mismatch(es)** (first 50):")
+                  lines.append("")
+                  lines += [f"- {m}" for m in mismatches[:50]]
+                  lines.append("")
+
+          lines.append("### Size and commit")
+          lines.append("")
+          size_mb = as_int(env.get("SIZE_MB"))
+          max_mb = as_int(env.get("MAX_COMMIT_MB"))
+          if export_ran:
+              lines.append(
+                  f"- `{db_dir}`: {size_mb:,} MB total, `data/` {as_int(env.get('DATA_MB')):,} MB "
+                  f"in {as_int(env.get('DATA_FILES')):,} files (max_commit_mb = {max_mb:,})"
+              )
+          if env.get("EXPORT_OUTCOME") != "success":
+              lines.append("- The export did not complete: nothing is committed.")
+          elif env.get("COMMIT_RESULTS") != "true":
+              lines.append("- commit_results is false: nothing is committed; download the artifact.")
+          elif size_mb > max_mb:
+              lines.append("- Too large to commit in full: everything **except `data/`** is committed, "
+                           "plus `DATA_NOT_COMMITTED.md`. The full export is in the run artifact.")
+          else:
+              lines.append("- The whole export directory is committed.")
+          lines.append("")
+
+          text = "\n".join(lines) + "\n"
+          print(text)
+          summary = env.get("GITHUB_STEP_SUMMARY")
+          if summary:
+              with open(summary, "a", encoding="utf-8") as fh:
+                  fh.write(text)
+          PY
+
+      - name: Upload export artifact
+        if: always() && steps.size.outputs.exists == 'true'
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: export-${{ steps.cfg.outputs.db_sanitized }}-run${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ steps.cfg.outputs.db_dir }}
+          retention-days: 14
+          if-no-files-found: warn
+
+      - name: Commit and push export
+        id: commit
+        if: steps.cfg.outputs.commit_results == 'true'
+        env:
+          DB_NAME: ${{ steps.cfg.outputs.database }}
+          DB_DIR: ${{ steps.cfg.outputs.db_dir }}
+          SCHEMA_ONLY: ${{ steps.cfg.outputs.schema_only }}
+          MAX_COMMIT_MB: ${{ steps.cfg.outputs.max_commit_mb }}
+          REQUEST_FILE: ${{ steps.cfg.outputs.request_file }}
+          VALIDATE_OUTCOME: ${{ steps.validate.outcome }}
+          ARTIFACT_NAME: export-${{ steps.cfg.outputs.db_sanitized }}-run${{ github.run_id }}-${{ github.run_attempt }}
+          PUSH_ATTEMPTS: "4"
+          PUSH_RETRY_SECONDS: "10"
+        run: |
+          case "$DB_DIR" in
+            export/?*) ;;
+            *) echo "::error::Unexpected export directory '${DB_DIR}'."; exit 1 ;;
+          esac
+          if [ ! -f "$DB_DIR/manifest.json" ]; then
+            echo "::error::${DB_DIR}/manifest.json is missing; refusing to commit an incomplete export."
+            exit 1
+          fi
+          if [ "${GITHUB_REF_TYPE:-branch}" != "branch" ]; then
+            echo "::warning::This run is on '${GITHUB_REF_NAME}', which is not a branch; nothing was committed. Download the artifact instead."
+            exit 0
+          fi
+          branch="${GITHUB_REF_NAME}"
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          marker="$DB_DIR/DATA_NOT_COMMITTED.md"
+          rm -f -- "$marker"
+          total_mb="$(du -sm -- "$DB_DIR" | cut -f1)"
+          data_mb=0
+          data_files=0
+          if [ -d "$DB_DIR/data" ]; then
+            data_mb="$(du -sm -- "$DB_DIR/data" | cut -f1)"
+            data_files="$(find "$DB_DIR/data" -type f | wc -l | tr -d ' ')"
+          fi
+
+          # GitHub rejects any single file over 100 MB.
+          big_other="$(find "$DB_DIR" -type f -size +95M -not -path "$DB_DIR/data/*" -printf '%P\n')"
+          if [ -n "$big_other" ]; then
+            echo "::error::These files are over 95 MB and cannot be pushed to GitHub: $(echo "$big_other" | tr '\n' ' '). The complete export is in artifact ${ARTIFACT_NAME}."
+            exit 1
+          fi
+          big_data=""
+          if [ -d "$DB_DIR/data" ]; then
+            big_data="$(find "$DB_DIR/data" -type f -size +95M -printf '%P\n')"
+          fi
+
+          reason=""
+          if [ "$total_mb" -gt "$MAX_COMMIT_MB" ]; then
+            reason="the export is ${total_mb} MB, above max_commit_mb (${MAX_COMMIT_MB} MB)"
+          elif [ -n "$big_data" ]; then
+            reason="some data files are over GitHub's 100 MB per-file limit"
+          fi
+
+          data_committed=true
+          if [ -n "$reason" ]; then
+            data_committed=false
+            {
+              echo "# Table data not committed"
+              echo
+              echo "The data/ directory of this export was **not** committed because ${reason}."
+              echo "Everything else (manifest.json, 00_schemas.sql, tables/, views/, routines/, source/, sequences.sql, foreign_keys.sql, validation_report.json) is committed."
+              echo
+              echo "| Item | Size |"
+              echo "| --- | --- |"
+              echo "| Export directory (${DB_DIR}) | ${total_mb} MB |"
+              echo "| data/ | ${data_mb} MB in ${data_files} files |"
+              echo "| max_commit_mb | ${MAX_COMMIT_MB} MB |"
+              if [ -n "$big_data" ]; then
+                echo
+                echo "Data files over 95 MB:"
+                echo
+                while IFS= read -r f; do echo "- ${f}"; done <<< "$big_data"
+              fi
+              echo
+              echo "Workflow run: ${run_url}"
+              echo
+              echo "To get the data: download the artifact \`${ARTIFACT_NAME}\` from that run (kept 14 days),"
+              echo "or re-run the workflow with a larger max_commit_mb (a single push must stay under 2 GB)."
+            } > "$marker"
+            git add -A -- "$DB_DIR" ":(exclude)${DB_DIR}/data"
+            # Drop any data/ committed by an earlier run so the repo never mixes
+            # an old data snapshot with this run's schema and manifest.
+            git rm -r -q --cached --ignore-unmatch -- "$DB_DIR/data"
+          else
+            git add -A -- "$DB_DIR"
+          fi
+
+          if git diff --cached --quiet; then
+            echo "Nothing changed in ${DB_DIR}; no commit made."
+            echo "- Commit: nothing changed in \`${DB_DIR}\`, no commit made." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          if [ "$SCHEMA_ONLY" = "true" ]; then
+            subject="Export ${DB_NAME}: schema, views, routines (schema only, run ${GITHUB_RUN_ID})"
+          else
+            subject="Export ${DB_NAME}: schema, data, views, routines (run ${GITHUB_RUN_ID})"
+          fi
+          {
+            echo "$subject"
+            echo
+            echo "Workflow run: ${run_url}"
+            echo "Validation load into Postgres 16: ${VALIDATE_OUTCOME:-not run}"
+            echo "Export size: ${total_mb} MB (data/ ${data_mb} MB in ${data_files} files)"
+            if [ "$data_committed" = "false" ]; then
+              echo "data/ NOT committed: ${reason}. See ${marker}."
+            fi
+            if [ -n "${REQUEST_FILE}" ]; then
+              echo "Request: ${REQUEST_FILE}"
+            fi
+          } > "${RUNNER_TEMP:-/tmp}/export-commit-msg.txt"
+          git commit -q -F "${RUNNER_TEMP:-/tmp}/export-commit-msg.txt"
+
+          attempt=1
+          until git push origin "HEAD:refs/heads/${branch}"; do
+            if [ "$attempt" -ge "$PUSH_ATTEMPTS" ]; then
+              echo "::error::git push to ${branch} failed after ${attempt} attempts. The export is still available as artifact ${ARTIFACT_NAME}."
+              exit 1
+            fi
+            attempt=$((attempt + 1))
+            echo "Push rejected; rebasing onto origin/${branch} and retrying (attempt ${attempt}/${PUSH_ATTEMPTS})."
+            sleep "$PUSH_RETRY_SECONDS"
+            if ! git pull --rebase origin "$branch"; then
+              git rebase --abort || true
+              echo "::error::Could not rebase the export commit onto origin/${branch}. The export is still available as artifact ${ARTIFACT_NAME}."
+              exit 1
+            fi
+          done
+
+          sha="$(git rev-parse --short HEAD)"
+          echo "Pushed ${sha} to ${branch}."
+          {
+            echo "- Commit: \`${sha}\` pushed to \`${branch}\`."
+            if [ "$data_committed" = "false" ]; then
+              echo "- **data/ NOT committed**: ${reason}. See \`${marker}\` and artifact \`${ARTIFACT_NAME}\`."
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail the run if validation failed
+        if: always() && steps.validate.outcome == 'failure'
+        env:
+          DB_DIR: ${{ steps.cfg.outputs.db_dir }}
+        run: |
+          echo "::error title=Validation failed::The export did not load cleanly into Postgres 16. See the job summary and ${DB_DIR}/validation_report.json (committed and in the artifact)."
+          exit 1

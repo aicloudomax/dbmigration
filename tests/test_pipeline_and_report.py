@@ -12,6 +12,7 @@ from dbmigration.model import Column, Database, Index, Routine, SourceKind, Tabl
 from dbmigration.pipeline import (
     SourceTarget,
     build_schema_statements,
+    build_table_statements,
     migrate_database_plan,
     plan_schema_names,
 )
@@ -101,3 +102,25 @@ def test_report_markdown_renders():
     assert "# Database Migration Report" in md
     assert "sales_dbo" in md
     assert "usp_get" in md.lower()
+
+
+def test_schema_statements_create_schemas_first_then_tables():
+    create, fks, _ = build_schema_statements(make_plan(), sample_db())
+    assert create[0] == 'CREATE SCHEMA IF NOT EXISTS "sales_dbo";'
+    assert create[1].startswith('CREATE TABLE IF NOT EXISTS "sales_dbo"."customer"')
+    assert fks == []
+
+
+def test_table_statements_one_per_table():
+    (tddl,) = build_table_statements(make_plan(), sample_db())
+    assert (tddl.target_schema, tddl.target_table) == ("sales_dbo", "customer")
+    assert len(tddl.identity_reset_sqls) == 1
+
+
+def test_migrate_plan_records_ddl_notes():
+    db = sample_db()
+    db.tables[0].columns.append(
+        Column(name="Flag", source_type="bit", default="(CONVERT([bit],(0)))", ordinal=4)
+    )
+    outcome = migrate_database_plan(make_plan(), db)
+    assert any("not translated; dropped" in n for n in outcome.tables[0].notes)

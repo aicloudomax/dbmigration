@@ -30,6 +30,9 @@ class Column:
     numeric_scale: int | None = None
     is_identity: bool = False
     ordinal: int = 0
+    # True for source computed columns (MS SQL sys.columns.is_computed). The
+    # value is still read and copied; the target decides how to model it.
+    is_computed: bool = False
 
 
 @dataclass
@@ -49,6 +52,9 @@ class ForeignKey:
     ref_columns: list[str]
     on_delete: str | None = None
     on_update: str | None = None
+    # True when the source constraint is disabled or untrusted (WITH NOCHECK):
+    # existing rows may violate it, so it is re-created NOT VALID.
+    not_valid: bool = False
 
 
 @dataclass
