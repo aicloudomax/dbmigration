@@ -193,7 +193,7 @@ def test_job_runner_timeout_and_postgres_service(wf: dict) -> None:
     assert pg["image"] == "postgres:16"
     assert pg["env"]["POSTGRES_PASSWORD"] == "postgres"
     assert pg["ports"] == ["5432:5432"]
-    assert "--health-cmd pg_isready" in pg["options"]
+    assert '--health-cmd "pg_isready -U postgres"' in pg["options"]
     assert job["env"]["VALIDATION_DB_URL"] == (
         "postgresql://postgres:postgres@localhost:5432/postgres"
     )
