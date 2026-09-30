@@ -1,0 +1,176 @@
+
+
+CREATE PROC [dbo].[DMS_FactFinalStatsPrep] AS
+
+--Select COunt(*)
+DELETE FROM [DMS_FactL2Monitor]					Where ConfigValue='NULL' and IsSAP='1' and IsSQL='1' and IsFTP='1' and IsSharePoint='1'
+DELETE FROM DMS_FactL2Monitor_MedicineConfig	Where ConfigValue='NULL' and IsSAP='1' and IsSQL='1' and IsFTP='1' and IsSharePoint='1'
+
+
+DELETE FROM DMS_FactL2Monitor 
+WHERE ConfigID IN 
+    (SELECT l2.ConfigID 
+    FROM DMS_FactL2Monitor l2 
+    LEFT JOIN DMS_CustMonitorConfig cm ON l2.ConfigID = cm.ConfigID 
+    WHERE cm.SyncDataType IS NULL)
+
+
+--Truncate Table DMS_FactFunctionaStatsBRIMArchive
+--Truncate Table DMS_FactAttributeStatsBRIMArchive
+--Truncate Table DMS_FactFunctionaStatsArchive
+--Truncate Table DMS_FactAttributeStatsArchive
+--Truncate Table DMS_FactFunctionaStatsBRIM
+--Truncate Table DMS_FactAttributeStatsBRIM
+--Truncate Table DMS_FactFunctionaStats
+--Truncate Table DMS_FactAttributeStats
+
+Insert into DMS_FactFunctionaStatsBRIMArchive
+Select *,getdate() as 'ArchivedDate' from DMS_FactFunctionaStatsBRIM
+
+Delete From DMS_FactFunctionaStatsBRIM
+
+Insert into DMS_FactAttributeStatsBRIMArchive
+Select *,getdate() as 'ArchivedDate' from DMS_FactAttributeStatsBRIM
+
+Delete From DMS_FactAttributeStatsBRIM
+
+Insert into DMS_FactFunctionaStatsArchive
+Select *,getdate() as 'ArchivedDate' from DMS_FactFunctionaStats
+
+Delete From DMS_FactFunctionaStats
+
+Insert into DMS_FactAttributeStatsArchive
+Select *,getdate() as 'ArchivedDate' from DMS_FactAttributeStats
+
+DELETE FROM DMS_FactAttributeStats
+
+------No Filter stats DMS_FactFunctionaStats
+INSERT INTO DMS_FactFunctionaStats
+Select cm.SyncDataType
+,Count(Distinct cm.ConfigID) as  ConfigIDCount
+,Count(1) as TotoalAttributeValue
+,Sum(Case When MatchStatus= 'Matched' Then 1 Else 0 End )		As AttributeValueMatched
+,Sum(Case When MatchStatus= 'Not Matched' Then 1 Else 0 End )	As AttributeValueNotMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Not Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageNotMatched
+From DMS_FactL2Monitor l2
+Left Join DMS_CustMonitorConfig cm ON l2.ConfigID=cm.ConfigID
+Group by cm.SyncDataType
+
+Select * from DMS_FactFunctionaStats
+
+------No Filter stats DMS_FactAttributeStats
+Insert into DMS_FactAttributeStats
+Select l2.ConfigID,Fields,cm.SyncDataType,ConfigCategory,GeneralColumnName
+,Count(Distinct cm.ConfigID) as  ConfigIDCount
+,Count(1) as TotoalAttributeValue
+,Sum(Case When MatchStatus= 'Matched' Then 1 Else 0 End )		As AttributeValueMatched
+,Sum(Case When MatchStatus= 'Not Matched' Then 1 Else 0 End )	As AttributeValueNotMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Not Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageNotMatched
+,Max(LoadRunDateTime) LastRunDateTime
+From DMS_FactL2Monitor l2
+Left Join DMS_CustMonitorConfig cm ON l2.ConfigID=cm.ConfigID
+Group by l2.ConfigID,Fields,cm.SyncDataType,ConfigCategory,GeneralColumnName
+
+Select * from DMS_FactAttributeStats
+
+------------------------------------------------------------------------------------Medicine Config
+
+INSERT INTO DMS_FactFunctionaStatsBRIM
+Select cm.SyncDataType
+,Count(Distinct cm.ConfigID) as  ConfigIDCount
+,Count(1) as TotoalAttributeValue
+,Sum(Case When MatchStatus= 'Matched' Then 1 Else 0 End )		As AttributeValueMatched
+,Sum(Case When MatchStatus= 'Not Matched' Then 1 Else 0 End )	As AttributeValueNotMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Not Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageNotMatched
+From DMS_FactL2Monitor_MedicineConfig l2 (NOLOCK)
+Left Join DMS_CustMonitorConfig (NOLOCK) cm ON l2.ConfigID=cm.ConfigID
+Where 1=1
+and cm.SyncDataType = 'MedicineConfig' and CONCLUSION_NEEDS_CC = 'Y'
+Group by cm.SyncDataType
+
+
+INSERT INTO DMS_FactAttributeStatsBRIM
+Select l2.ConfigID,Fields,cm.SyncDataType,ConfigCategory,GeneralColumnName
+,Count(Distinct cm.ConfigID) as  ConfigIDCount
+,Count(1) as TotoalAttributeValue
+,Sum(Case When MatchStatus= 'Matched' Then 1 Else 0 End )		As AttributeValueMatched
+,Sum(Case When MatchStatus= 'Not Matched' Then 1 Else 0 End )	As AttributeValueNotMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Not Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageNotMatched
+,Max(LoadRunDateTime) LastRunDateTime
+From DMS_FactL2Monitor_MedicineConfig l2 (NOLOCK)
+Left Join DMS_CustMonitorConfig (NOLOCK) cm ON l2.ConfigID=cm.ConfigID
+Where 1=1
+and cm.SyncDataType = 'MedicineConfig' and CONCLUSION_NEEDS_CC = 'Y'
+Group by l2.ConfigID,Fields,cm.SyncDataType,ConfigCategory,GeneralColumnName
+
+
+------------------------------------------------------------------------------------Patient Config
+
+INSERT INTO DMS_FactFunctionaStatsBRIM
+Select cm.SyncDataType
+,Count(Distinct cm.ConfigID) as  ConfigIDCount
+,Count(1) as TotoalAttributeValue
+,Sum(Case When MatchStatus= 'Matched' Then 1 Else 0 End )		As AttributeValueMatched
+,Sum(Case When MatchStatus= 'Not Matched' Then 1 Else 0 End )	As AttributeValueNotMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Not Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageNotMatched
+From DMS_FactL2Monitor_PatientConfig l2 (NOLOCK)
+Left Join DMS_CustMonitorConfig (NOLOCK) cm ON l2.ConfigID=cm.ConfigID
+Where 1=1
+and cm.SyncDataType = 'PatientConfig' and CONCLUSION_NEEDS_CC = 'Y'
+Group by cm.SyncDataType
+
+
+INSERT INTO DMS_FactAttributeStatsBRIM
+Select l2.ConfigID,Fields,cm.SyncDataType,ConfigCategory,GeneralColumnName
+,Count(Distinct cm.ConfigID) as  ConfigIDCount
+,Count(1) as TotoalAttributeValue
+,Sum(Case When MatchStatus= 'Matched' Then 1 Else 0 End )		As AttributeValueMatched
+,Sum(Case When MatchStatus= 'Not Matched' Then 1 Else 0 End )	As AttributeValueNotMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Not Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageNotMatched
+,Max(LoadRunDateTime) LastRunDateTime
+From DMS_FactL2Monitor_PatientConfig l2 (NOLOCK)
+Left Join DMS_CustMonitorConfig (NOLOCK) cm ON l2.ConfigID=cm.ConfigID
+Where 1=1
+and cm.SyncDataType = 'PatientConfig' and CONCLUSION_NEEDS_CC = 'Y'
+Group by l2.ConfigID,Fields,cm.SyncDataType,ConfigCategory,GeneralColumnName
+
+
+------------------------------------------------------------------------------------Medicine Purchase Type
+
+INSERT INTO DMS_FactFunctionaStatsBRIM
+Select cm.SyncDataType
+,Count(Distinct cm.ConfigID) as  ConfigIDCount
+,Count(1) as TotoalAttributeValue
+,Sum(Case When MatchStatus= 'Matched' Then 1 Else 0 End )		As AttributeValueMatched
+,Sum(Case When MatchStatus= 'Not Matched' Then 1 Else 0 End )	As AttributeValueNotMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Not Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageNotMatched
+From DMS_FactL2Monitor_MedicinePurchaseType l2 (NOLOCK)
+Left Join DMS_CustMonitorConfig (NOLOCK) cm ON l2.ConfigID=cm.ConfigID
+Where 1=1
+and cm.SyncDataType = 'MedicinePurchaseType' and CONCLUSION_NEEDS_CC = 'Y'
+Group by cm.SyncDataType
+
+
+INSERT INTO DMS_FactAttributeStatsBRIM
+Select l2.ConfigID,Fields,cm.SyncDataType,ConfigCategory,GeneralColumnName
+,Count(Distinct cm.ConfigID) as  ConfigIDCount
+,Count(1) as TotoalAttributeValue
+,Sum(Case When MatchStatus= 'Matched' Then 1 Else 0 End )		As AttributeValueMatched
+,Sum(Case When MatchStatus= 'Not Matched' Then 1 Else 0 End )	As AttributeValueNotMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageMatched
+,ROUND((CONVERT(float, SUM(CASE WHEN MatchStatus= 'Not Matched' THEN 1 ELSE 0 END)) * 100 / COUNT(1)), 2) AS PercentageNotMatched
+,Max(LoadRunDateTime) LastRunDateTime
+From DMS_FactL2Monitor_MedicinePurchaseType l2 (NOLOCK)
+Left Join DMS_CustMonitorConfig (NOLOCK) cm ON l2.ConfigID=cm.ConfigID
+Where 1=1
+and cm.SyncDataType = 'MedicinePurchaseType' and CONCLUSION_NEEDS_CC = 'Y'
+Group by l2.ConfigID,Fields,cm.SyncDataType,ConfigCategory,GeneralColumnName
+
+

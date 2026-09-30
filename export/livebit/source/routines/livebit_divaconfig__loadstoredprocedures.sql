@@ -1,0 +1,151 @@
+CREATE PROC divaconfig.LoadStoredProcedures
+As
+--CREATE TABLE divaconfig.StoredProcedures (
+--    ProcedureID INT IDENTITY PRIMARY KEY,
+--    ProcedureName VARCHAR(255) NOT NULL,
+--    ProcedureDescription VARCHAR(500),
+--    ProcedureDefinition NVARCHAR(MAX), -- Increased size for longer definitions
+--    ProcedureCreatedBy VARCHAR(100),
+--    ProcedureCreatedDate DATETIME DEFAULT GETDATE(),
+--    ProcedureIsManualOnly BIT NULL,
+--    ProcedureIsIngestionOnly BIT NULL,
+--    ProcedureCategory1 VARCHAR(100) NULL,
+--    ProcedureCategory2 VARCHAR(100) NULL,
+--    ProcedureCategory3 VARCHAR(100) NULL,
+--    ProcedureCategory4 VARCHAR(100) NULL,
+--    ProcedureCategory5 VARCHAR(100) NULL,
+--    Type2Active BIT NOT NULL DEFAULT 1,        -- Type 2 active flag
+--    Type2StartDate DATETIME DEFAULT GETDATE(), -- Type 2 start date
+--    Type2EndDate DATETIME NULL                 -- Type 2 end date
+--);
+
+
+-- Insert stored procedure metadata dynamically into divaconfig.StoredProcedures
+--Truncate From divaconfig.StoredProcedures
+INSERT INTO divaconfig.StoredProcedures (
+    ProcedureName,
+    ProcedureDescription,
+    ProcedureDefinition,
+    ProcedureCreatedBy,
+    ProcedureCreatedDate,
+    ProcedureIsManualOnly,
+    ProcedureIsIngestionOnly,
+    ProcedureCategory1,
+    ProcedureCategory2,
+    ProcedureCategory3,
+    ProcedureCategory4,
+    ProcedureCategory5
+)
+SELECT
+    SCHEMA_NAME(p.schema_id) + '.' + p.name AS ProcedureName, -- Full procedure name with schema
+    NULL AS ProcedureDescription, -- Placeholder, can be updated manually
+    OBJECT_DEFINITION(p.object_id) AS ProcedureDefinition, -- Retrieves the procedure definition
+    SUSER_SNAME(p.principal_id) AS ProcedureCreatedBy, -- Owner of the procedure
+    p.create_date AS ProcedureCreatedDate, -- Creation date
+    NULL AS ProcedureIsManualOnly, -- Placeholder, to be updated based on business logic
+    NULL AS ProcedureIsIngestionOnly, -- Placeholder, to be updated based on business logic
+    NULL AS ProcedureCategory1, -- Placeholder, to be updated manually or dynamically
+    NULL AS ProcedureCategory2, -- Placeholder, to be updated manually or dynamically
+    NULL AS ProcedureCategory3, -- Placeholder, to be updated manually or dynamically
+    NULL AS ProcedureCategory4, -- Placeholder, to be updated manually or dynamically
+    NULL AS ProcedureCategory5 -- Placeholder, to be updated manually or dynamically
+FROM
+    sys.procedures p
+WHERE
+    p.is_ms_shipped = 0; -- Exclude system-stored procedures
+
+
+--CREATE TABLE divaconfig.StoredProcedureParameters (
+--    ParameterID INT IDENTITY PRIMARY KEY,
+--    ProcedureID INT NOT NULL, -- Foreign key to StoredProcedures table
+--    ParameterName VARCHAR(255) NOT NULL,
+--    ParameterDataType NVARCHAR(50),
+--    ParameterIsOptional BIT DEFAULT 0,
+--    ParameterDefaultValue VARCHAR(255) NULL,
+--    ParameterDefaultDynamicValue VARCHAR(255) NULL,
+--    Type2Active BIT NOT NULL DEFAULT 1,        -- Type 2 active flag
+--    Type2StartDate DATETIME DEFAULT GETDATE(), -- Type 2 start date
+--    Type2EndDate DATETIME NULL                 -- Type 2 end date
+--);
+
+--Truncate table divaconfig.StoredProcedureParameters
+
+-- Loop through all stored procedures and populate StoredProcedureParameters dynamically
+INSERT INTO divaconfig.StoredProcedureParameters (
+    ProcedureID,
+    ParameterName,
+    ParameterDataType,
+    ParameterIsOptional,
+    ParameterDefaultValue,
+    ParameterDefaultDynamicValue
+)
+SELECT
+    sp.ProcedureID,
+    p.name AS ParameterName,
+    TYPE_NAME(p.user_type_id) AS ParameterDataType,
+    CASE WHEN p.is_output = 1 THEN 1 ELSE 0 END AS ParameterIsOptional, -- Treat OUTPUT parameters as optional
+    NULL AS ParameterDefaultValue, -- SQL Server does not store default values directly
+    NULL AS ParameterDefaultDynamicValue -- Placeholder for dynamic default values
+FROM
+    sys.procedures procs
+INNER JOIN
+    sys.parameters p ON procs.object_id = p.object_id
+INNER JOIN
+    divaconfig.StoredProcedures sp ON sp.ProcedureName = SCHEMA_NAME(procs.schema_id) + '.' + procs.name
+WHERE
+    procs.is_ms_shipped = 0; -- Exclude system-stored procedures
+
+
+INSERT INTO divaconfig.StoredProcedureAccess (
+    ProcedureID,
+    UserID,
+    HasExecuteAccess,
+    Type2Active,
+    Type2StartDate
+)
+SELECT 
+    sp.ProcedureID,
+    u.UserID,
+    1 AS HasExecuteAccess, -- Grant execute access
+    1 AS Type2Active, -- Active permission
+    GETDATE() AS Type2StartDate -- Current date
+FROM 
+    divaconfig.StoredProcedures sp
+CROSS JOIN 
+    dbo.[User] u; -- Combine all procedures with all users
+
+
+/*
+CREATE TABLE divaconfig.StoredProcedureExecutionLog (
+    ProcedureLogID INT IDENTITY PRIMARY KEY,
+    ProcedureID INT NULL ,
+	ProcedureTabID INT NULL ,
+    ProcedureExecutedBy NVARCHAR(255) NOT NULL,
+    ProcedureExecutionStart DATETIME DEFAULT GETDATE(),
+	ProcedureExecutionEnd DATETIME ,
+    ProcedureParametersUsed NVARCHAR(MAX),
+    ProcedureExecutionStatus NVARCHAR(50),
+    ProcedureErrorMessage NVARCHAR(MAX)
+);
+CREATE TABLE divaconfig.ProcedureTabMapping (
+    MappingID INT IDENTITY ,
+    ProcedureID INT NOT NULL ,
+    SubTabID INT NOT NULL ,
+    ProcedureTabMappingDescription NVARCHAR(500),
+    ProcedureTabMappingCreatedDate DATETIME DEFAULT GETDATE(),
+	Type2Active BIT NOT NULL DEFAULT 1,        -- Type 2 active flag
+    Type2StartDate DATETIME DEFAULT GETDATE(), -- Type 2 start date
+    Type2EndDate DATETIME NULL                 -- Type 2 end date
+);
+
+CREATE TABLE divaconfig.StoredProcedureAccess (
+    AccessID INT IDENTITY ,
+    ProcedureID INT NULL,
+    UserID INT NULL,
+    HasExecuteAccess BIT DEFAULT 0,
+	Type2Active BIT NOT NULL DEFAULT 1,        -- Type 2 active flag
+    Type2StartDate DATETIME DEFAULT GETDATE(), -- Type 2 start date
+    Type2EndDate DATETIME NULL                 -- Type 2 end date
+);
+
+*/

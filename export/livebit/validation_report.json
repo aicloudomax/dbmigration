@@ -1,0 +1,4149 @@
+{
+  "dump_dir": "export/livebit",
+  "database": "LiveBit",
+  "target": "postgresql://postgres:***@localhost:5432/postgres",
+  "started_at": "2026-09-30T15:57:37Z",
+  "finished_at": "2026-09-30T15:57:42Z",
+  "ok": false,
+  "stopped_early": false,
+  "totals": {
+    "ok": 359,
+    "failed": 54,
+    "row_mismatches": 0,
+    "rows_loaded": 192594
+  },
+  "by_kind": {
+    "schemas": {
+      "ok": 1,
+      "failed": 0
+    },
+    "tables": {
+      "ok": 135,
+      "failed": 0
+    },
+    "data": {
+      "ok": 135,
+      "failed": 0
+    },
+    "sequences": {
+      "ok": 76,
+      "failed": 0
+    },
+    "foreign_keys": {
+      "ok": 11,
+      "failed": 0
+    },
+    "views": {
+      "ok": 1,
+      "failed": 2
+    },
+    "routines": {
+      "ok": 0,
+      "failed": 52
+    }
+  },
+  "failures": [
+    {
+      "file": "views/livebit_dbo__vwassessment.sql",
+      "statement": "CREATE OR REPLACE VIEW \"livebit_dbo\".\"vwassessment\" AS Select distinct --ID to Match with Evaluation Cast(s.surveyid as varchar(99))+'-'+Cast(q.questionid as varchar(99))+'-'+Cast(r.responseid as varchar(99)) as 'AssessmentID' --Assessment Group Details ,sg.surveyproductid, sg.surveyproductcatego...",
+      "error": "syntax error at or near \"'AssessmentID'\"\nLINE 19: ...har(99))+'-'+Cast(r.responseid as varchar(99)) as 'Assessmen...\n                                                              ^"
+    },
+    {
+      "file": "views/livebit_dbo__vwevaluation.sql",
+      "statement": "CREATE OR REPLACE VIEW \"livebit_dbo\".\"vwevaluation\" AS SELECT evalid ,Cast(surveyid as varchar(99))+'-'+Cast(questionid as varchar(99))+'-'+Cast(responseid as varchar(99)) as 'AssessmentID' ,surveyid ,questionid ,responseid ,userid ,questionstartdisplaydatatime ,questionresponcesubmiteddatetime ,...",
+      "error": "syntax error at or near \"'AssessmentID'\"\nLINE 9: ...rchar(99))+'-'+Cast(responseid as varchar(99)) as 'Assessmen...\n                                                             ^"
+    },
+    {
+      "file": "routines/livebit_aidd__loadalltablecolumnvalues.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_aidd\".\"loadalltablecolumnvalues\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): cursor — port to a PL/pgSQL FOR loop or cursor [OPEN cur] -- REVIEW (manual): ...",
+      "error": "syntax error at or near \"ON\"\nLINE 25:         SET NOCOUNT ON;\n                             ^"
+    },
+    {
+      "file": "routines/livebit_aidd__loadcolumninfo.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_aidd\".\"loadcolumninfo\"(schema text, table text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): MERGE statement — rewrite as INSERT ... ON CONFLICT [MERGE] -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- RE...",
+      "error": "syntax error at or near \"table\"\nLINE 5: ...TION \"livebit_aidd\".\"loadcolumninfo\"(schema text, table text...\n                                                             ^"
+    },
+    {
+      "file": "routines/livebit_aidd__loadtableinfo.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_aidd\".\"loadtableinfo\"(viewname text, viewschemaname text DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WH...",
+      "error": "syntax error at or near \"ON\"\nLINE 27:         SET NOCOUNT ON;\n                             ^"
+    },
+    {
+      "file": "routines/livebit_aidd__loadviewinfo.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_aidd\".\"loadviewinfo\"(viewname text, viewschemaname text DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHE...",
+      "error": "syntax error at or near \"ON\"\nLINE 26:         SET NOCOUNT ON;\n                             ^"
+    },
+    {
+      "file": "routines/livebit_dbo__dms_factfinalstatsprep.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_factfinalstatsprep\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.DMS_FactFinalStatsPrep ---- --Select COunt(*) DELETE FROM [DMS_FactL2Monitor] Where ConfigValue='NULL' and IsSAP='1' and IsSQL='1' and I...",
+      "error": "syntax error at or near \"[\"\nLINE 12:     DELETE FROM [DMS_FactL2Monitor]     Where ConfigValue='N...\n                         ^"
+    },
+    {
+      "file": "routines/livebit_dbo__dms_factl2perconfig.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_factl2perconfig\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): sp_exe...",
+      "error": "syntax error at or near \"DECLARE\"\nLINE 317:     DECLARE sql NVARCHAR(400)\n              ^\nCONTEXT:  invalid type name \"INT\n    DECLARE sql NVARCHAR(400)\n    DECLARE loadrundatetime DATETIME \""
+    },
+    {
+      "file": "routines/livebit_dbo__dms_loadcustmonitorconfig.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_loadcustmonitorconfig\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.DMS_LoadCustMonitorConfig ---- begin Truncate Table [dbo].[DMS_CustMonitorConfig]; SET IDENTITY_INSERT [dbo].[DMS_CustMonitorConfig] ...",
+      "error": "syntax error at or near \"[\"\nLINE 12:     Truncate Table [dbo].[DMS_CustMonitorConfig];\n                            ^"
+    },
+    {
+      "file": "routines/livebit_dbo__dms_postrunacn.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_postrunacn\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 100] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 100] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 100] -- REVIEW (manua...",
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 241:     SET IDENTITY_INSERT dbo.FactL2Monitor_ACN ON;\n                                                          ^"
+    },
+    {
+      "file": "routines/livebit_dbo__dms_postrunmedicineconfig.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_postrunmedicineconfig\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 50] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 20] -- ---- converted from T-SQL procedure dbo.DMS_PostRunMedicineCo...",
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 146: ...SET IDENTITY_INSERT dbo.DMS_FactL2Monitor_MedicineConfig ON;\n                                                                        ^"
+    },
+    {
+      "file": "routines/livebit_dbo__dms_postrunmedicinepurchasetype.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_postrunmedicinepurchasetype\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] --...",
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 138: ...ENTITY_INSERT dbo.DMS_FactL2Monitor_MedicinePurchaseType ON;\n                                                                        ^"
+    },
+    {
+      "file": "routines/livebit_dbo__dms_postrunpatientconfig.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_postrunpatientconfig\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] -- REVIEW...",
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 46:         ADD PatientName VARCHAR(100);\n                                             ^"
+    },
+    {
+      "file": "routines/livebit_dbo__dms_postrunsalesposition.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_postrunsalesposition\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.DMS_PostRunSalesPosition ---- Begin IF OBJECT_ID('dbo.INFA_C_BO_CUST_EXT_XREF_base', 'U') IS NOT NULL BEGIN DROP TABLE dbo.INFA_C_BO_C...",
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 180:     SET IDENTITY_INSERT dbo.FactL2Monitor_SalesPosition ON;\n                                                                    ^"
+    },
+    {
+      "file": "routines/livebit_dbo__fn_diagramobjects.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"fn_diagramobjects\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.fn_diagramobjects ---- N'dbo' AS BEGIN declare id_upgraddiagrams int declare id_sysdiagrams int declare id_helpdiagrams int declare id_helpdi...",
+      "error": "syntax error at or near \"N\"\nLINE 11:     N'dbo'\n             ^"
+    },
+    {
+      "file": "routines/livebit_dbo__getsurveyquestionsandresponses.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"getsurveyquestionsandresponses\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): cursor — port to a PL/pgSQL FOR loop or cursor [OPEN question_cursor] -- REVIEW (manual): cursor — port to a PL/pgSQL FOR loop or curso...",
+      "error": "syntax error at or near \"TABLE\"\nLINE 18:         DECLARE result TABLE (\n                                ^\nCONTEXT:  invalid type name \"TABLE (\n            Question NVARCHAR(MAX),\n            GroupText NVARCHAR(MAX),\n            Response NVARCHAR(MAX),\n            Sort INT,\n            ShortDescription NVARCHAR(MAX),\n            LargeDescription NVARCHAR(MAX),\n            IsTopBoxChoice BIT,\n            IsBottomBoxChoice BIT,\n            IsAverageChoice BIT,\n            Weightage INT\n        )\""
+    },
+    {
+      "file": "routines/livebit_dbo__logexecutiondetails.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"logexecutiondetails\"(procedurename text DEFAULT NULL, parameterdetails text DEFAULT NULL, openaistepname text DEFAULT NULL, openaiparameterdetails text DEFAULT NULL, openaiprompt text DEFAULT NULL, additionalloggingdetails text DEFAULT NULL, status text, ...",
+      "error": "syntax error at or near \"OUTPUT\"\nLINE 5: ...age text DEFAULT NULL, logid integer DEFAULT NULL OUTPUT, ex...\n                                                             ^"
+    },
+    {
+      "file": "routines/livebit_dbo__populatedatedimension.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"populatedatedimension\"(startdate date DEFAULT '20240101', numberofyears integer DEFAULT 2) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.PopulateDateDimension ---- --exec PopulateDateDimension '20250101',1 --...",
+      "error": "syntax error at or near \"7\"\nLINE 15:         SET DATEFIRST 7;\n                               ^"
+    },
+    {
+      "file": "routines/livebit_dbo__responseisaveragechoice.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"responseisaveragechoice\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.ResponseIsAverageChoice ---- BEGIN Declare responseistopboxchoice varchar(50), responseisbottomboxchoice varchar(50), r...",
+      "error": "syntax error at or near \",\"\nLINE 12:         Declare responseistopboxchoice varchar(50), response...\n                                                           ^"
+    },
+    {
+      "file": "routines/livebit_dbo__responseisbottomboxchoice.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"responseisbottomboxchoice\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.ResponseIsBottomBoxChoice ---- BEGIN Declare responseistopboxchoice varchar(50), responseisbottomboxchoice varchar(50...",
+      "error": "syntax error at or near \",\"\nLINE 12:         Declare responseistopboxchoice varchar(50), response...\n                                                           ^"
+    },
+    {
+      "file": "routines/livebit_dbo__responseistopboxchoice.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"responseistopboxchoice\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.ResponseIsTopBoxChoice ---- BEGIN Declare responseistopboxchoice varchar(50), responseisbottomboxchoice varchar(50), res...",
+      "error": "syntax error at or near \",\"\nLINE 12:         Declare responseistopboxchoice varchar(50), response...\n                                                           ^"
+    },
+    {
+      "file": "routines/livebit_dbo__responseweightage.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"responseweightage\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.ResponseWeightage ---- BEGIN Declare responseistopboxchoice varchar(50), responseisbottomboxchoice varchar(50), responseisave...",
+      "error": "syntax error at or near \",\"\nLINE 12:         Declare responseistopboxchoice varchar(50), response...\n                                                           ^"
+    },
+    {
+      "file": "routines/livebit_dbo__sp_alterdiagram.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_alterdiagram\"(diagramname text, owner_id integer DEFAULT null, version integer, definition bytea) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_alterdiagram ---- 'dbo' AS BEGIN set nocount on declare th...",
+      "error": "input parameters after one with a default value must also have defaults"
+    },
+    {
+      "file": "routines/livebit_dbo__sp_creatediagram.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_creatediagram\"(diagramname text, owner_id integer DEFAULT null, version integer, definition bytea) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_creatediagram ---- 'dbo' AS BEGIN set nocount on declare ...",
+      "error": "input parameters after one with a default value must also have defaults"
+    },
+    {
+      "file": "routines/livebit_dbo__sp_dropdiagram.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_dropdiagram\"(diagramname text, owner_id integer DEFAULT null) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_dropdiagram ---- 'dbo' AS BEGIN set nocount on declare theid int declare isdbo int declare uid...",
+      "error": "syntax error at or near \"'dbo'\"\nLINE 11:     'dbo'\n             ^"
+    },
+    {
+      "file": "routines/livebit_dbo__sp_helpdiagramdefinition.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_helpdiagramdefinition\"(diagramname text, owner_id integer DEFAULT null) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_helpdiagramdefinition ---- N'dbo' AS BEGIN set nocount on declare theid int declare ...",
+      "error": "syntax error at or near \"N\"\nLINE 11:     N'dbo'\n             ^"
+    },
+    {
+      "file": "routines/livebit_dbo__sp_helpdiagrams.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_helpdiagrams\"(diagramname text DEFAULT NULL, owner_id integer DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_helpdiagrams ---- N'dbo' AS BEGIN DECLARE user sysname DECLARE dbologin bit EXEC...",
+      "error": "syntax error at or near \"N\"\nLINE 11:     N'dbo'\n             ^"
+    },
+    {
+      "file": "routines/livebit_dbo__sp_renamediagram.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_renamediagram\"(diagramname text, owner_id integer DEFAULT null, new_diagramname text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_renamediagram ---- 'dbo' AS BEGIN set nocount on declare theid int dec...",
+      "error": "input parameters after one with a default value must also have defaults"
+    },
+    {
+      "file": "routines/livebit_dbo__sp_survey_assessment_rpt.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_survey_assessment_rpt\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_survey_assessment_rpt ---- begin Select distinct [QuestionShortText],[QuestionShortAbbrev] ---,r.ResponseText,[ResponceDescriptionT...",
+      "error": "syntax error at or near \"[\"\nLINE 13:     [QuestionShortText],[QuestionShortAbbrev]\n             ^"
+    },
+    {
+      "file": "routines/livebit_dbo__sp_ui_evalsubmit.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_ui_evalsubmit\"(surveyid integer, questionid integer, responseid integer, userid integer, questionstartdisplaydatatime timestamp, questionresponcesubmiteddatetime timestamp) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TOP n — r...",
+      "error": "syntax error at or near \"ON\"\nLINE 13:         SET NOCOUNT ON;\n                             ^"
+    },
+    {
+      "file": "routines/livebit_dbo__sp_upgraddiagrams.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_upgraddiagrams\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_upgraddiagrams ---- BEGIN IF OBJECT_ID(N'dbo.sysdiagrams') IS NOT NULL return 0; CREATE TABLE dbo.sysdiagrams ( name sysname NOT NULL, pri...",
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 13:        return 0;\n                        ^"
+    },
+    {
+      "file": "routines/livebit_dbo__test.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"test\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.Test ---- begin select dbo.ResponseIsTopBoxChoice(surveyid) as ResponseIsTopBoxChoice ,dbo.ResponseIsBottomBoxChoice(surveyid) as Response...",
+      "error": "syntax error at or near \"end\"\nLINE 19:     end\n             ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__load1tablecolumnvalue.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"load1tablecolumnvalue\"(inputfulltablename text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): MERGE statement — rewrite as INSERT ... ON CONFLICT [MERGE] -- REVIEW (manual): MERGE statement — rewrite as INSERT ... ON CONFLIC...",
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 34: ...input parameter inputfulltablename cannot be NULL.', 16, 1);\n                                                                       ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadalltablecolumnvalue.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadalltablecolumnvalue\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): IDENTITY(...) in a query — verify sequence semantics [IDENTITY(] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- ----...",
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 15:             DROP TABLE [divaconfig].[TableList]; -- Drop the...\n                                                        ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadcolumninfo.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadcolumninfo\"(schemaname text, tablename text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- ---- converted from T-SQL procedure divaconfig.LoadColumnInfo ---- ...",
+      "error": "syntax error at or near \"ON\"\nLINE 13:         SET NOCOUNT ON;\n                             ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadcompanyinfocardchart.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadcompanyinfocardchart\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): MERGE statement — rewrite as INSERT ... ON CONFLICT [MERGE] -- ---- converted from T-SQL procedure divaconfig.loadCompanyInfoCardChart ---- MERGE INTO...",
+      "error": "syntax error at or near \"[\"\nLINE 12:     MERGE INTO [divaconfig].[CardDisplayPerSubtab] AS target\n                        ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__loaddivametadata.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loaddivametadata\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure divaconfig.LoadDIVAMetadata ---- exec [divaconfig].[LoadTableInfo] --Select * from [divaconfig].[TableInfo]Where TableName like '%SampleEmp...",
+      "error": "\"exec\" is not a known variable\nLINE 11:     exec [divaconfig].[LoadTableInfo]\n             ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadspecialtablecardchart.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadspecialtablecardchart\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): MERGE statement — rewrite as INSERT ... ON CONFLICT [MERGE] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- ---- co...",
+      "error": "syntax error at or near \"[\"\nLINE 13:     MERGE INTO [divaconfig].[CardDisplayPerSubtab] AS target\n                        ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadstoredprocedures.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadstoredprocedures\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- ---- converte...",
+      "error": "syntax error at or near \"[\"\nLINE 125:         dbo.[User] u; -- Combine all procedures with all use...\n                      ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadtableinfo.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadtableinfo\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual): TRY/C...",
+      "error": "syntax error at or near \"ON\"\nLINE 22:         SET NOCOUNT ON;\n                             ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__masterexecuteprocedure.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"masterexecuteprocedure\"(userid integer, subtabid integer, procedurename text, parameters text DEFAULT NULL, debug boolean DEFAULT 0 -- Set this to 1 for debugging) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql ...",
+      "error": "syntax error at or near \"RETURNS\"\nLINE 6: RETURNS void\n        ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_dynamiccrud.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_dynamiccrud\"(inputschematable text, inputoperationtype text, inputcsvvalues text, debug boolean DEFAULT 0 -- Debug flag (1 = show details) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... ...",
+      "error": "syntax error at or near \"RETURNS\"\nLINE 6: RETURNS void\n        ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_dynamiccrudold.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_dynamiccrudold\"(inputschematable text, inputoperationtype text, inputcsvvalues text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): sp_executesq...",
+      "error": "type \"nvarchar\" does not exist\nLINE 24:      Declare schematable NVARCHAR(256), -- Format: 'schema.t...\n                                  ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_get1columnvaluedata.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_get1columnvaluedata\"(schematable text, columnname text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- REVIEW (manual): string concatenation with '+' — use '||'...",
+      "error": "type \"nvarchar\" does not exist\nLINE 26:         DECLARE schemaname NVARCHAR(255);\n                                    ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_getallcolumnvaluedata.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_getallcolumnvaluedata\"(schematable text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+...",
+      "error": "type \"nvarchar\" does not exist\nLINE 26:         DECLARE schemaname NVARCHAR(255);\n                                    ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_getcolumnmetadata.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_getcolumnmetadata\"(schematable text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] ...",
+      "error": "type \"nvarchar\" does not exist\nLINE 27:         DECLARE schemaname NVARCHAR(255);\n                                    ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_getstoredprocedurelog.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_getstoredprocedurelog\"(proceduretabid integer, procedureid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure divaconfig.sp_GetStoredProcedureLog ---- SELECT [ProcedureExecutionStatus] AS 'Status', ...",
+      "error": "\"select\" is not a known variable\nLINE 11:     SELECT   \n             ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_gettables.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_gettables\"(schemaname text DEFAULT NULL, tablename text DEFAULT NULL, schematablecsv text DEFAULT NULL -- Optional: Comma-separated schema.table combinations) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatena...",
+      "error": "syntax error at or near \"RETURNS\"\nLINE 6: RETURNS void\n        ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__usplogcustomsp.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"usplogcustomsp\"(inputstoredprocedureexecutionid text, inputstoredprocedurename text, inputtransactiontype text, inputbatchid bigint, inputstoredprocedureparameterall text, executioncontext text DEFAULT NULL, executionsqcontext integer DEFAULT NULL,...",
+      "error": "type \"datetime2\" does not exist\nLINE 20:         DECLARE starttime          DATETIME2 = (now() at tim...\n                                            ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__uspsampleerrorprocessdata.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"uspsampleerrorprocessdata\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (ma...",
+      "error": "type \"uniqueidentifier\" does not exist\nLINE 17:         DECLARE executionid UNIQUEIDENTIFIER = gen_random_uu...\n                                     ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__uspsamplemainprocess.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"uspsamplemainprocess\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual)...",
+      "error": "type \"uniqueidentifier\" does not exist\nLINE 17:         DECLARE executionid UNIQUEIDENTIFIER = gen_random_uu...\n                                     ^"
+    },
+    {
+      "file": "routines/livebit_divaconfig__uspsampleprocessdata.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"uspsampleprocessdata\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual)...",
+      "error": "type \"uniqueidentifier\" does not exist\nLINE 17:         DECLARE executionid UNIQUEIDENTIFIER = gen_random_uu...\n                                     ^"
+    },
+    {
+      "file": "routines/livebit_divadim__loaddatedimension.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divadim\".\"loaddatedimension\"(startdate date DEFAULT '20250101', numberofyears integer DEFAULT 1) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure divadim.LoadDateDimension ---- --exec divadim.LoadDateDimension '20200101',...",
+      "error": "syntax error at or near \"7\"\nLINE 15:         SET DATEFIRST 7;\n                               ^"
+    },
+    {
+      "file": "routines/livebit_divadim__loaddatedimension_combined.sql",
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divadim\".\"loaddatedimension_combined\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- ---- conve...",
+      "error": "syntax error at or near \"IF\"\nLINE 17:     IF OBJECT_ID('divadim.DateDimension_Combined', 'U') IS N...\n             ^"
+    }
+  ],
+  "row_checks": [
+    {
+      "table": "livebit_aidd.api_keys",
+      "source": "aidd.api_keys",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.columninfo",
+      "source": "aidd.ColumnInfo",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.conversations",
+      "source": "aidd.conversations",
+      "expected": 167,
+      "actual": 167,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.llm_models",
+      "source": "aidd.llm_models",
+      "expected": 5,
+      "actual": 5,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.llm_providers",
+      "source": "aidd.llm_providers",
+      "expected": 1,
+      "actual": 1,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.llm_requests",
+      "source": "aidd.llm_requests",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.llm_responses",
+      "source": "aidd.llm_responses",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.messages",
+      "source": "aidd.messages",
+      "expected": 1099,
+      "actual": 1099,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.plans",
+      "source": "aidd.plans",
+      "expected": 2,
+      "actual": 2,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.quotas",
+      "source": "aidd.quotas",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.routing_rules",
+      "source": "aidd.routing_rules",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.tableinfo",
+      "source": "aidd.TableInfo",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.tenants",
+      "source": "aidd.tenants",
+      "expected": 13,
+      "actual": 13,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.usage_events",
+      "source": "aidd.usage_events",
+      "expected": 2,
+      "actual": 2,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.user_plan_subscriptions",
+      "source": "aidd.user_plan_subscriptions",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.users",
+      "source": "aidd.users",
+      "expected": 10,
+      "actual": 10,
+      "match": true
+    },
+    {
+      "table": "livebit_aidd.verification_codes",
+      "source": "aidd.verification_codes",
+      "expected": 10,
+      "actual": 10,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.approval",
+      "source": "dbo.Approval",
+      "expected": 152,
+      "actual": 152,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.buildsurvey",
+      "source": "dbo.BuildSurvey",
+      "expected": 78,
+      "actual": 78,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.buildsurvey_bkp",
+      "source": "dbo.BuildSurvey_bkp",
+      "expected": 56,
+      "actual": 56,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.chat_context_config",
+      "source": "dbo.chat_context_config",
+      "expected": 5,
+      "actual": 5,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.column",
+      "source": "dbo.Column",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.column1",
+      "source": "dbo.Column1",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.columnmetadatadictionary",
+      "source": "dbo.ColumnMetadataDictionary",
+      "expected": 245,
+      "actual": 245,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.company",
+      "source": "dbo.Company",
+      "expected": 11,
+      "actual": 11,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.divatempdistinctcounts",
+      "source": "dbo.DivaTempDistinctCounts",
+      "expected": 48,
+      "actual": 48,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.divatempinsert",
+      "source": "dbo.DivaTempInsert",
+      "expected": 20,
+      "actual": 20,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.divatempinsertvalues",
+      "source": "dbo.DivaTempInsertValues",
+      "expected": 14,
+      "actual": 14,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.divatemplatestmetadata",
+      "source": "dbo.DivaTempLatestMetadata",
+      "expected": 48,
+      "actual": 48,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_comparecode",
+      "source": "dbo.DMS_CompareCode",
+      "expected": 32,
+      "actual": 32,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_comparecodesample_new",
+      "source": "dbo.DMS_CompareCodeSample_new",
+      "expected": 32,
+      "actual": 32,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_configidbusinesspartnerpercetage",
+      "source": "dbo.DMS_ConfigIDBusinessPartnerPercetage",
+      "expected": 12,
+      "actual": 12,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_custdynamicconfig",
+      "source": "dbo.DMS_CustDynamicConfig",
+      "expected": 12,
+      "actual": 12,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_custmonitorconfig",
+      "source": "dbo.DMS_CustMonitorConfig",
+      "expected": 12,
+      "actual": 12,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_custmonitorconfig_update",
+      "source": "dbo.DMS_CustMonitorConfig_Update",
+      "expected": 13,
+      "actual": 13,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factattributestats",
+      "source": "dbo.DMS_FactAttributeStats",
+      "expected": 12,
+      "actual": 12,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factattributestatsarchive",
+      "source": "dbo.DMS_FactAttributeStatsArchive",
+      "expected": 120,
+      "actual": 120,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factattributestatsbrim",
+      "source": "dbo.DMS_FactAttributeStatsBRIM",
+      "expected": 12,
+      "actual": 12,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factattributestatsbrimarchive",
+      "source": "dbo.DMS_FactAttributeStatsBRIMArchive",
+      "expected": 89,
+      "actual": 89,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factfunctionastats",
+      "source": "dbo.DMS_FactFunctionaStats",
+      "expected": 3,
+      "actual": 3,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factfunctionastatsarchive",
+      "source": "dbo.DMS_FactFunctionaStatsArchive",
+      "expected": 29,
+      "actual": 29,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factfunctionastatsbrim",
+      "source": "dbo.DMS_FactFunctionaStatsBRIM",
+      "expected": 3,
+      "actual": 3,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factfunctionastatsbrimarchive",
+      "source": "dbo.DMS_FactFunctionaStatsBRIMArchive",
+      "expected": 23,
+      "actual": 23,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factl2monitor",
+      "source": "dbo.DMS_FactL2Monitor",
+      "expected": 416,
+      "actual": 416,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factl2monitor_medicineconfig",
+      "source": "dbo.DMS_FactL2Monitor_MedicineConfig",
+      "expected": 104,
+      "actual": 104,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factl2monitor_medicinepurchasetype",
+      "source": "dbo.DMS_FactL2Monitor_MedicinePurchaseType",
+      "expected": 90,
+      "actual": 90,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_factl2monitor_patientconfig",
+      "source": "dbo.DMS_FactL2Monitor_PatientConfig",
+      "expected": 222,
+      "actual": 222,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_ftp_medicine",
+      "source": "dbo.DMS_FTP_Medicine",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_ftp_medicine_base",
+      "source": "dbo.DMS_FTP_Medicine_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_ftp_patient",
+      "source": "dbo.DMS_FTP_Patient",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_ftp_patient_base",
+      "source": "dbo.DMS_FTP_Patient_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sap_medicine",
+      "source": "dbo.DMS_SAP_Medicine",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sap_medicine_base",
+      "source": "dbo.DMS_SAP_Medicine_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sap_medicinepurchasetype",
+      "source": "dbo.DMS_SAP_MedicinePurchaseType",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sap_medicinepurchasetype_base",
+      "source": "dbo.DMS_SAP_MedicinePurchaseType_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sap_patient",
+      "source": "dbo.DMS_SAP_Patient",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sap_patient_base",
+      "source": "dbo.DMS_SAP_Patient_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sharepoint_medicine",
+      "source": "dbo.DMS_SharePoint_Medicine",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sharepoint_medicine_base",
+      "source": "dbo.DMS_SharePoint_Medicine_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sharepoint_medicinepurchasetype",
+      "source": "dbo.DMS_SharePoint_MedicinePurchaseType",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sharepoint_medicinepurchasetype_base",
+      "source": "dbo.DMS_SharePoint_MedicinePurchaseType_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sharepoint_patient",
+      "source": "dbo.DMS_SharePoint_Patient",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sharepoint_patient_base",
+      "source": "dbo.DMS_SharePoint_Patient_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sql_medicine",
+      "source": "dbo.DMS_SQL_Medicine",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sql_medicine_base",
+      "source": "dbo.DMS_SQL_Medicine_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sql_medicinepurchasetype",
+      "source": "dbo.DMS_SQL_MedicinePurchaseType",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sql_medicinepurchasetype_base",
+      "source": "dbo.DMS_SQL_MedicinePurchaseType_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sql_patient",
+      "source": "dbo.DMS_SQL_Patient",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.dms_sql_patient_base",
+      "source": "dbo.DMS_SQL_Patient_Base",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.executionlog",
+      "source": "dbo.ExecutionLog",
+      "expected": 93,
+      "actual": 93,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.facteval",
+      "source": "dbo.FactEval",
+      "expected": 40,
+      "actual": 40,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.industrytype",
+      "source": "dbo.IndustryType",
+      "expected": 35,
+      "actual": 35,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.industrytypesample",
+      "source": "dbo.IndustryTypeSample",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.kevinaccount",
+      "source": "dbo.KevinAccount",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.kevinaccount2",
+      "source": "dbo.kevinaccount2",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.notifications",
+      "source": "dbo.Notifications",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.orders",
+      "source": "dbo.Orders",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.question",
+      "source": "dbo.Question",
+      "expected": 499,
+      "actual": 499,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.response",
+      "source": "dbo.Response",
+      "expected": 2777,
+      "actual": 2777,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.response_bkp",
+      "source": "dbo.Response_bkp",
+      "expected": 2997,
+      "actual": 2997,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.roles",
+      "source": "dbo.Roles",
+      "expected": 5,
+      "actual": 5,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.sampleemployees",
+      "source": "dbo.SampleEmployees",
+      "expected": 30,
+      "actual": 30,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.survey",
+      "source": "dbo.Survey",
+      "expected": 33,
+      "actual": 33,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.surveybk12132024",
+      "source": "dbo.SurveyBk12132024",
+      "expected": 70,
+      "actual": 70,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.surveygroup",
+      "source": "dbo.SurveyGroup",
+      "expected": 32,
+      "actual": 32,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.surveygroupbk12132024",
+      "source": "dbo.SurveyGroupBK12132024",
+      "expected": 57,
+      "actual": 57,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.sysdiagrams",
+      "source": "dbo.sysdiagrams",
+      "expected": 1,
+      "actual": 1,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.table",
+      "source": "dbo.Table",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.table1",
+      "source": "dbo.Table1",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.tablemetadatadictionary",
+      "source": "dbo.TableMetadataDictionary",
+      "expected": 31,
+      "actual": 31,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.tempcustmonitorconfigl2",
+      "source": "dbo.TempCustMonitorConfigL2",
+      "expected": 1,
+      "actual": 1,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.tracker",
+      "source": "dbo.Tracker",
+      "expected": 2,
+      "actual": 2,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.user",
+      "source": "dbo.User",
+      "expected": 57,
+      "actual": 57,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.userindustry",
+      "source": "dbo.UserIndustry",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_dbo.xl_columnmetadatadictionary",
+      "source": "dbo.XL_ColumnMetadataDictionary",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_diva.users",
+      "source": "diva.Users",
+      "expected": 5,
+      "actual": 5,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.carddisplaypersubtab",
+      "source": "divaconfig.CardDisplayPerSubtab",
+      "expected": 82,
+      "actual": 82,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.columninfo",
+      "source": "divaconfig.ColumnInfo",
+      "expected": 1780,
+      "actual": 1780,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.columnvalue",
+      "source": "divaconfig.ColumnValue",
+      "expected": 59393,
+      "actual": 59393,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.companyinfo",
+      "source": "divaconfig.CompanyInfo",
+      "expected": 1,
+      "actual": 1,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.databaseconfig",
+      "source": "divaconfig.DatabaseConfig",
+      "expected": 1,
+      "actual": 1,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.dynamiccrudexecutionlog",
+      "source": "divaconfig.DynamicCRUDExecutionLog",
+      "expected": 4090,
+      "actual": 4090,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.logcustomesp",
+      "source": "divaconfig.LogCustomeSp",
+      "expected": 5,
+      "actual": 5,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.portaltabsconfig",
+      "source": "divaconfig.PortalTabsConfig",
+      "expected": 15,
+      "actual": 15,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.proceduretabmapping",
+      "source": "divaconfig.ProcedureTabMapping",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.roles",
+      "source": "divaconfig.Roles",
+      "expected": 4,
+      "actual": 4,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.sampledata",
+      "source": "divaconfig.SampleData",
+      "expected": 20,
+      "actual": 20,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.sampledata_sample",
+      "source": "divaconfig.sampleData_sample",
+      "expected": 6,
+      "actual": 6,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.storedprocedureaccess",
+      "source": "divaconfig.StoredProcedureAccess",
+      "expected": 22084,
+      "actual": 22084,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.storedprocedureexecutionlog",
+      "source": "divaconfig.StoredProcedureExecutionLog",
+      "expected": 99,
+      "actual": 99,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.storedprocedureparameters",
+      "source": "divaconfig.StoredProcedureParameters",
+      "expected": 703,
+      "actual": 703,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.storedprocedures",
+      "source": "divaconfig.StoredProcedures",
+      "expected": 162,
+      "actual": 162,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.storedprocsubtaboperation",
+      "source": "divaconfig.StoredProcSubTabOperation",
+      "expected": 9,
+      "actual": 9,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.subtabsconfig",
+      "source": "divaconfig.SubTabsConfig",
+      "expected": 52,
+      "actual": 52,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.subtabtable",
+      "source": "divaconfig.SubTabTable",
+      "expected": 20,
+      "actual": 20,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.tableinfo",
+      "source": "divaconfig.TableInfo",
+      "expected": 108,
+      "actual": 108,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.tablelist",
+      "source": "divaconfig.TableList",
+      "expected": 103,
+      "actual": 103,
+      "match": true
+    },
+    {
+      "table": "livebit_divaconfig.userroles",
+      "source": "divaconfig.UserRoles",
+      "expected": 5,
+      "actual": 5,
+      "match": true
+    },
+    {
+      "table": "livebit_divadim.datedimension",
+      "source": "divadim.DateDimension",
+      "expected": 3653,
+      "actual": 3653,
+      "match": true
+    },
+    {
+      "table": "livebit_divadim.datedimension_combined",
+      "source": "divadim.DateDimension_Combined",
+      "expected": 2191,
+      "actual": 2191,
+      "match": true
+    },
+    {
+      "table": "livebit_divadim.dimcountry",
+      "source": "divadim.DimCountry",
+      "expected": 249,
+      "actual": 249,
+      "match": true
+    },
+    {
+      "table": "livebit_divadim.dimelement",
+      "source": "divadim.DimElement",
+      "expected": 118,
+      "actual": 118,
+      "match": true
+    },
+    {
+      "table": "livebit_divadim.dimmastercolumn",
+      "source": "divadim.DimMasterColumn",
+      "expected": 463,
+      "actual": 463,
+      "match": true
+    },
+    {
+      "table": "livebit_divadim.dimmastertable",
+      "source": "divadim.DimMasterTable",
+      "expected": 5,
+      "actual": 5,
+      "match": true
+    },
+    {
+      "table": "livebit_divadim.dimplanet",
+      "source": "divadim.DimPlanet",
+      "expected": 40,
+      "actual": 40,
+      "match": true
+    },
+    {
+      "table": "livebit_divadim.dimtime",
+      "source": "divadim.DimTime",
+      "expected": 86400,
+      "actual": 86400,
+      "match": true
+    },
+    {
+      "table": "livebit_sandbox.cloudomax",
+      "source": "Sandbox.CloudOMax",
+      "expected": 9,
+      "actual": 9,
+      "match": true
+    },
+    {
+      "table": "livebit_sandbox.clouomax",
+      "source": "Sandbox.ClouOMax",
+      "expected": 0,
+      "actual": 0,
+      "match": true
+    },
+    {
+      "table": "livebit_zora.click",
+      "source": "zora.click",
+      "expected": 7,
+      "actual": 7,
+      "match": true
+    },
+    {
+      "table": "livebit_zora.company",
+      "source": "zora.company",
+      "expected": 1,
+      "actual": 1,
+      "match": true
+    },
+    {
+      "table": "livebit_zora.domain",
+      "source": "zora.domain",
+      "expected": 4,
+      "actual": 4,
+      "match": true
+    },
+    {
+      "table": "livebit_zora.link",
+      "source": "zora.link",
+      "expected": 8,
+      "actual": 8,
+      "match": true
+    },
+    {
+      "table": "livebit_zora.plans",
+      "source": "zora.plans",
+      "expected": 5,
+      "actual": 5,
+      "match": true
+    },
+    {
+      "table": "livebit_zora.shorturl",
+      "source": "zora.shortUrl",
+      "expected": 8,
+      "actual": 8,
+      "match": true
+    },
+    {
+      "table": "livebit_zora.users",
+      "source": "zora.users",
+      "expected": 14,
+      "actual": 14,
+      "match": true
+    }
+  ],
+  "results": [
+    {
+      "file": "00_schemas.sql",
+      "kind": "schemas",
+      "ok": true,
+      "statements": 7
+    },
+    {
+      "file": "tables/livebit_aidd__api_keys.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__columninfo.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__conversations.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__llm_models.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__llm_providers.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__llm_requests.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__llm_responses.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__messages.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__plans.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__quotas.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__routing_rules.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__tableinfo.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__tenants.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 3
+    },
+    {
+      "file": "tables/livebit_aidd__usage_events.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__user_plan_subscriptions.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_aidd__users.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 3
+    },
+    {
+      "file": "tables/livebit_aidd__verification_codes.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 4
+    },
+    {
+      "file": "tables/livebit_dbo__approval.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__buildsurvey.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__buildsurvey_bkp.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__chat_context_config.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__column.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__column1.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__columnmetadatadictionary.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__company.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__divatempdistinctcounts.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__divatempinsert.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__divatempinsertvalues.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__divatemplatestmetadata.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_comparecode.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_comparecodesample_new.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_configidbusinesspartnerpercetage.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_custdynamicconfig.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_custmonitorconfig.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_custmonitorconfig_update.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factattributestats.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factattributestatsarchive.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factattributestatsbrim.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factattributestatsbrimarchive.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factfunctionastats.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factfunctionastatsarchive.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factfunctionastatsbrim.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factfunctionastatsbrimarchive.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factl2monitor.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factl2monitor_medicineconfig.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factl2monitor_medicinepurchasetype.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_factl2monitor_patientconfig.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_ftp_medicine.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_ftp_medicine_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_ftp_patient.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_ftp_patient_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sap_medicine.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sap_medicine_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sap_medicinepurchasetype.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sap_medicinepurchasetype_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sap_patient.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sap_patient_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sharepoint_medicine.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sharepoint_medicine_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sharepoint_medicinepurchasetype.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sharepoint_medicinepurchasetype_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sharepoint_patient.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sharepoint_patient_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sql_medicine.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sql_medicine_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sql_medicinepurchasetype.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sql_medicinepurchasetype_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sql_patient.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__dms_sql_patient_base.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__executionlog.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__facteval.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__industrytype.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__industrytypesample.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__kevinaccount.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__kevinaccount2.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__notifications.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__orders.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__question.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__response.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__response_bkp.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__roles.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__sampleemployees.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__survey.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__surveybk12132024.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__surveygroup.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__surveygroupbk12132024.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__sysdiagrams.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 2
+    },
+    {
+      "file": "tables/livebit_dbo__table.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__table1.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__tablemetadatadictionary.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__tempcustmonitorconfigl2.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__tracker.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__user.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__userindustry.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_dbo__xl_columnmetadatadictionary.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_diva__users.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 2
+    },
+    {
+      "file": "tables/livebit_divaconfig__carddisplaypersubtab.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__columninfo.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__columnvalue.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__companyinfo.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__databaseconfig.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__dynamiccrudexecutionlog.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__logcustomesp.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 2
+    },
+    {
+      "file": "tables/livebit_divaconfig__portaltabsconfig.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__proceduretabmapping.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__roles.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__sampledata.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__sampledata_sample.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__storedprocedureaccess.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__storedprocedureexecutionlog.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__storedprocedureparameters.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__storedprocedures.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__storedprocsubtaboperation.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__subtabsconfig.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__subtabtable.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__tableinfo.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__tablelist.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divaconfig__userroles.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divadim__datedimension.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divadim__datedimension_combined.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divadim__dimcountry.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divadim__dimelement.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divadim__dimmastercolumn.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divadim__dimmastertable.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divadim__dimplanet.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_divadim__dimtime.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_sandbox__cloudomax.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_sandbox__clouomax.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_zora__click.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_zora__company.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 3
+    },
+    {
+      "file": "tables/livebit_zora__domain.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 2
+    },
+    {
+      "file": "tables/livebit_zora__link.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 2
+    },
+    {
+      "file": "tables/livebit_zora__plans.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_zora__shorturl.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "tables/livebit_zora__users.sql",
+      "kind": "tables",
+      "ok": true,
+      "statements": 2
+    },
+    {
+      "file": "data/livebit_aidd__api_keys.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_aidd__columninfo.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_aidd__conversations.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 167
+    },
+    {
+      "file": "data/livebit_aidd__llm_models.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 5
+    },
+    {
+      "file": "data/livebit_aidd__llm_providers.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 1
+    },
+    {
+      "file": "data/livebit_aidd__llm_requests.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_aidd__llm_responses.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_aidd__messages.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 2,
+      "rows": 1099
+    },
+    {
+      "file": "data/livebit_aidd__plans.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 2
+    },
+    {
+      "file": "data/livebit_aidd__quotas.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_aidd__routing_rules.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_aidd__tableinfo.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_aidd__tenants.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 13
+    },
+    {
+      "file": "data/livebit_aidd__usage_events.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 2
+    },
+    {
+      "file": "data/livebit_aidd__user_plan_subscriptions.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_aidd__users.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 10
+    },
+    {
+      "file": "data/livebit_aidd__verification_codes.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 10
+    },
+    {
+      "file": "data/livebit_dbo__approval.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 152
+    },
+    {
+      "file": "data/livebit_dbo__buildsurvey.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 78
+    },
+    {
+      "file": "data/livebit_dbo__buildsurvey_bkp.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 56
+    },
+    {
+      "file": "data/livebit_dbo__chat_context_config.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 5
+    },
+    {
+      "file": "data/livebit_dbo__column.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_dbo__column1.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_dbo__columnmetadatadictionary.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 245
+    },
+    {
+      "file": "data/livebit_dbo__company.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 11
+    },
+    {
+      "file": "data/livebit_dbo__divatempdistinctcounts.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 48
+    },
+    {
+      "file": "data/livebit_dbo__divatempinsert.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 20
+    },
+    {
+      "file": "data/livebit_dbo__divatempinsertvalues.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 14
+    },
+    {
+      "file": "data/livebit_dbo__divatemplatestmetadata.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 48
+    },
+    {
+      "file": "data/livebit_dbo__dms_comparecode.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 32
+    },
+    {
+      "file": "data/livebit_dbo__dms_comparecodesample_new.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 32
+    },
+    {
+      "file": "data/livebit_dbo__dms_configidbusinesspartnerpercetage.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 12
+    },
+    {
+      "file": "data/livebit_dbo__dms_custdynamicconfig.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 12
+    },
+    {
+      "file": "data/livebit_dbo__dms_custmonitorconfig.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 12
+    },
+    {
+      "file": "data/livebit_dbo__dms_custmonitorconfig_update.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 13
+    },
+    {
+      "file": "data/livebit_dbo__dms_factattributestats.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 12
+    },
+    {
+      "file": "data/livebit_dbo__dms_factattributestatsarchive.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 120
+    },
+    {
+      "file": "data/livebit_dbo__dms_factattributestatsbrim.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 12
+    },
+    {
+      "file": "data/livebit_dbo__dms_factattributestatsbrimarchive.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 89
+    },
+    {
+      "file": "data/livebit_dbo__dms_factfunctionastats.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 3
+    },
+    {
+      "file": "data/livebit_dbo__dms_factfunctionastatsarchive.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 29
+    },
+    {
+      "file": "data/livebit_dbo__dms_factfunctionastatsbrim.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 3
+    },
+    {
+      "file": "data/livebit_dbo__dms_factfunctionastatsbrimarchive.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 23
+    },
+    {
+      "file": "data/livebit_dbo__dms_factl2monitor.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 416
+    },
+    {
+      "file": "data/livebit_dbo__dms_factl2monitor_medicineconfig.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 104
+    },
+    {
+      "file": "data/livebit_dbo__dms_factl2monitor_medicinepurchasetype.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 90
+    },
+    {
+      "file": "data/livebit_dbo__dms_factl2monitor_patientconfig.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 222
+    },
+    {
+      "file": "data/livebit_dbo__dms_ftp_medicine.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_ftp_medicine_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_ftp_patient.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_ftp_patient_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sap_medicine.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sap_medicine_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sap_medicinepurchasetype.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sap_medicinepurchasetype_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sap_patient.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sap_patient_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sharepoint_medicine.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sharepoint_medicine_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sharepoint_medicinepurchasetype.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sharepoint_medicinepurchasetype_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sharepoint_patient.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sharepoint_patient_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sql_medicine.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sql_medicine_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sql_medicinepurchasetype.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sql_medicinepurchasetype_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sql_patient.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__dms_sql_patient_base.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__executionlog.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 93
+    },
+    {
+      "file": "data/livebit_dbo__facteval.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 40
+    },
+    {
+      "file": "data/livebit_dbo__industrytype.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 35
+    },
+    {
+      "file": "data/livebit_dbo__industrytypesample.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__kevinaccount.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_dbo__kevinaccount2.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_dbo__notifications.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_dbo__orders.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_dbo__question.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 499
+    },
+    {
+      "file": "data/livebit_dbo__response.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 2,
+      "rows": 2777
+    },
+    {
+      "file": "data/livebit_dbo__response_bkp.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 2,
+      "rows": 2997
+    },
+    {
+      "file": "data/livebit_dbo__roles.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 5
+    },
+    {
+      "file": "data/livebit_dbo__sampleemployees.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 30
+    },
+    {
+      "file": "data/livebit_dbo__survey.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 33
+    },
+    {
+      "file": "data/livebit_dbo__surveybk12132024.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 70
+    },
+    {
+      "file": "data/livebit_dbo__surveygroup.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 32
+    },
+    {
+      "file": "data/livebit_dbo__surveygroupbk12132024.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 57
+    },
+    {
+      "file": "data/livebit_dbo__sysdiagrams.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 1
+    },
+    {
+      "file": "data/livebit_dbo__table.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_dbo__table1.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_dbo__tablemetadatadictionary.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 31
+    },
+    {
+      "file": "data/livebit_dbo__tempcustmonitorconfigl2.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 1
+    },
+    {
+      "file": "data/livebit_dbo__tracker.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 2
+    },
+    {
+      "file": "data/livebit_dbo__user.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 57
+    },
+    {
+      "file": "data/livebit_dbo__userindustry.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_dbo__xl_columnmetadatadictionary.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_diva__users.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 5
+    },
+    {
+      "file": "data/livebit_divaconfig__carddisplaypersubtab.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 82
+    },
+    {
+      "file": "data/livebit_divaconfig__columninfo.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 1780
+    },
+    {
+      "file": "data/livebit_divaconfig__columnvalue.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 20,
+      "rows": 59393
+    },
+    {
+      "file": "data/livebit_divaconfig__companyinfo.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 1
+    },
+    {
+      "file": "data/livebit_divaconfig__databaseconfig.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 1
+    },
+    {
+      "file": "data/livebit_divaconfig__dynamiccrudexecutionlog.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 4090
+    },
+    {
+      "file": "data/livebit_divaconfig__logcustomesp.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 5
+    },
+    {
+      "file": "data/livebit_divaconfig__portaltabsconfig.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 15
+    },
+    {
+      "file": "data/livebit_divaconfig__proceduretabmapping.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_divaconfig__roles.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 4
+    },
+    {
+      "file": "data/livebit_divaconfig__sampledata.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 20
+    },
+    {
+      "file": "data/livebit_divaconfig__sampledata_sample.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 6
+    },
+    {
+      "file": "data/livebit_divaconfig__storedprocedureaccess.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 5,
+      "rows": 22084
+    },
+    {
+      "file": "data/livebit_divaconfig__storedprocedureexecutionlog.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 99
+    },
+    {
+      "file": "data/livebit_divaconfig__storedprocedureparameters.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 703
+    },
+    {
+      "file": "data/livebit_divaconfig__storedprocedures.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 2,
+      "rows": 162
+    },
+    {
+      "file": "data/livebit_divaconfig__storedprocsubtaboperation.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 9
+    },
+    {
+      "file": "data/livebit_divaconfig__subtabsconfig.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 52
+    },
+    {
+      "file": "data/livebit_divaconfig__subtabtable.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 20
+    },
+    {
+      "file": "data/livebit_divaconfig__tableinfo.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 108
+    },
+    {
+      "file": "data/livebit_divaconfig__tablelist.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 103
+    },
+    {
+      "file": "data/livebit_divaconfig__userroles.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 5
+    },
+    {
+      "file": "data/livebit_divadim__datedimension.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 3653
+    },
+    {
+      "file": "data/livebit_divadim__datedimension_combined.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 2191
+    },
+    {
+      "file": "data/livebit_divadim__dimcountry.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 249
+    },
+    {
+      "file": "data/livebit_divadim__dimelement.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 118
+    },
+    {
+      "file": "data/livebit_divadim__dimmastercolumn.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 463
+    },
+    {
+      "file": "data/livebit_divadim__dimmastertable.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 5
+    },
+    {
+      "file": "data/livebit_divadim__dimplanet.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 40
+    },
+    {
+      "file": "data/livebit_divadim__dimtime.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 28,
+      "rows": 86400
+    },
+    {
+      "file": "data/livebit_sandbox__cloudomax.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 9
+    },
+    {
+      "file": "data/livebit_sandbox__clouomax.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 0,
+      "rows": 0
+    },
+    {
+      "file": "data/livebit_zora__click.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 7
+    },
+    {
+      "file": "data/livebit_zora__company.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 1
+    },
+    {
+      "file": "data/livebit_zora__domain.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 4
+    },
+    {
+      "file": "data/livebit_zora__link.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 8
+    },
+    {
+      "file": "data/livebit_zora__plans.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 5
+    },
+    {
+      "file": "data/livebit_zora__shorturl.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 8
+    },
+    {
+      "file": "data/livebit_zora__users.sql",
+      "kind": "data",
+      "ok": true,
+      "statements": 1,
+      "rows": 14
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_aidd\".\"columninfo\"', 'columnid'), COALESCE(MAX(\"columnid\"), 1), MAX(\"columnid\") IS NOT NULL) FROM \"livebit_aidd\".\"columninfo\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_aidd\".\"tableinfo\"', 'tableid'), COALESCE(MAX(\"tableid\"), 1), MAX(\"tableid\") IS NOT NULL) FROM \"livebit_aidd\".\"tableinfo\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"approval\"', 'approvalid'), COALESCE(MAX(\"approvalid\"), 1), MAX(\"approvalid\") IS NOT NULL) FROM \"livebit_dbo\".\"approval\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"buildsurvey\"', 'buildsurveyid'), COALESCE(MAX(\"buildsurveyid\"), 1), MAX(\"buildsurveyid\") IS NOT NULL) FROM \"livebit_dbo\".\"buildsurvey\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"buildsurvey_bkp\"', 'buildsurveyid'), COALESCE(MAX(\"buildsurveyid\"), 1), MAX(\"buildsurveyid\") IS NOT NULL) FROM \"livebit_dbo\".\"buildsurvey_bkp\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"chat_context_config\"', 'id'), COALESCE(MAX(\"id\"), 1), MAX(\"id\") IS NOT NULL) FROM \"livebit_dbo\".\"chat_context_config\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"company\"', 'companyid'), COALESCE(MAX(\"companyid\"), 1), MAX(\"companyid\") IS NOT NULL) FROM \"livebit_dbo\".\"company\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"divatemplatestmetadata\"', 'columnid'), COALESCE(MAX(\"columnid\"), 1), MAX(\"columnid\") IS NOT NULL) FROM \"livebit_dbo\".\"divatemplatestmetadata\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_comparecode\"', 'codeid'), COALESCE(MAX(\"codeid\"), 1), MAX(\"codeid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_comparecode\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_comparecodesample_new\"', 'codeid'), COALESCE(MAX(\"codeid\"), 1), MAX(\"codeid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_comparecodesample_new\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_custmonitorconfig_update\"', 'configid'), COALESCE(MAX(\"configid\"), 1), MAX(\"configid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_custmonitorconfig_update\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_factl2monitor\"', 'factl2id'), COALESCE(MAX(\"factl2id\"), 1), MAX(\"factl2id\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_factl2monitor\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_factl2monitor_medicineconfig\"', 'factl2id'), COALESCE(MAX(\"factl2id\"), 1), MAX(\"factl2id\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_factl2monitor_medicineconfig\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_factl2monitor_medicinepurchasetype\"', 'factl2id'), COALESCE(MAX(\"factl2id\"), 1), MAX(\"factl2id\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_factl2monitor_medicinepurchasetype\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_factl2monitor_patientconfig\"', 'factl2id'), COALESCE(MAX(\"factl2id\"), 1), MAX(\"factl2id\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_factl2monitor_patientconfig\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_ftp_patient\"', 'patientid'), COALESCE(MAX(\"patientid\"), 1), MAX(\"patientid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_ftp_patient\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_ftp_patient_base\"', 'patientid'), COALESCE(MAX(\"patientid\"), 1), MAX(\"patientid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_ftp_patient_base\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sap_medicinepurchasetype\"', 'purchaseid'), COALESCE(MAX(\"purchaseid\"), 1), MAX(\"purchaseid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sap_medicinepurchasetype\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sap_medicinepurchasetype_base\"', 'purchaseid'), COALESCE(MAX(\"purchaseid\"), 1), MAX(\"purchaseid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sap_medicinepurchasetype_base\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sap_patient\"', 'patientid'), COALESCE(MAX(\"patientid\"), 1), MAX(\"patientid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sap_patient\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sap_patient_base\"', 'patientid'), COALESCE(MAX(\"patientid\"), 1), MAX(\"patientid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sap_patient_base\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sharepoint_medicinepurchasetype\"', 'purchaseid'), COALESCE(MAX(\"purchaseid\"), 1), MAX(\"purchaseid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sharepoint_medicinepurchasetype\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sharepoint_medicinepurchasetype_base\"', 'purchaseid'), COALESCE(MAX(\"purchaseid\"), 1), MAX(\"purchaseid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sharepoint_medicinepurchasetype_base\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sharepoint_patient\"', 'patientid'), COALESCE(MAX(\"patientid\"), 1), MAX(\"patientid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sharepoint_patient\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sharepoint_patient_base\"', 'patientid'), COALESCE(MAX(\"patientid\"), 1), MAX(\"patientid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sharepoint_patient_base\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sql_medicinepurchasetype\"', 'purchaseid'), COALESCE(MAX(\"purchaseid\"), 1), MAX(\"purchaseid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sql_medicinepurchasetype\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sql_medicinepurchasetype_base\"', 'purchaseid'), COALESCE(MAX(\"purchaseid\"), 1), MAX(\"purchaseid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sql_medicinepurchasetype_base\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sql_patient\"', 'patientid'), COALESCE(MAX(\"patientid\"), 1), MAX(\"patientid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sql_patient\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"dms_sql_patient_base\"', 'patientid'), COALESCE(MAX(\"patientid\"), 1), MAX(\"patientid\") IS NOT NULL) FROM \"livebit_dbo\".\"dms_sql_patient_base\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"executionlog\"', 'logid'), COALESCE(MAX(\"logid\"), 1), MAX(\"logid\") IS NOT NULL) FROM \"livebit_dbo\".\"executionlog\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"facteval\"', 'evalid'), COALESCE(MAX(\"evalid\"), 1), MAX(\"evalid\") IS NOT NULL) FROM \"livebit_dbo\".\"facteval\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"industrytype\"', 'industrytypeid'), COALESCE(MAX(\"industrytypeid\"), 1), MAX(\"industrytypeid\") IS NOT NULL) FROM \"livebit_dbo\".\"industrytype\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"industrytypesample\"', 'industrytypeid'), COALESCE(MAX(\"industrytypeid\"), 1), MAX(\"industrytypeid\") IS NOT NULL) FROM \"livebit_dbo\".\"industrytypesample\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"kevinaccount2\"', 'id'), COALESCE(MAX(\"id\"), 1), MAX(\"id\") IS NOT NULL) FROM \"livebit_dbo\".\"kevinaccount2\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"question\"', 'questionid'), COALESCE(MAX(\"questionid\"), 1), MAX(\"questionid\") IS NOT NULL) FROM \"livebit_dbo\".\"question\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"response\"', 'responseid'), COALESCE(MAX(\"responseid\"), 1), MAX(\"responseid\") IS NOT NULL) FROM \"livebit_dbo\".\"response\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"response_bkp\"', 'responseid'), COALESCE(MAX(\"responseid\"), 1), MAX(\"responseid\") IS NOT NULL) FROM \"livebit_dbo\".\"response_bkp\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"sampleemployees\"', 'id'), COALESCE(MAX(\"id\"), 1), MAX(\"id\") IS NOT NULL) FROM \"livebit_dbo\".\"sampleemployees\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"survey\"', 'surveyid'), COALESCE(MAX(\"surveyid\"), 1), MAX(\"surveyid\") IS NOT NULL) FROM \"livebit_dbo\".\"survey\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"surveybk12132024\"', 'surveyid'), COALESCE(MAX(\"surveyid\"), 1), MAX(\"surveyid\") IS NOT NULL) FROM \"livebit_dbo\".\"surveybk12132024\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"surveygroup\"', 'surveyproductid'), COALESCE(MAX(\"surveyproductid\"), 1), MAX(\"surveyproductid\") IS NOT NULL) FROM \"livebit_dbo\".\"surveygroup\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"surveygroupbk12132024\"', 'surveyproductid'), COALESCE(MAX(\"surveyproductid\"), 1), MAX(\"surveyproductid\") IS NOT NULL) FROM \"livebit_dbo\".\"surveygroupbk12132024\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"sysdiagrams\"', 'diagram_id'), COALESCE(MAX(\"diagram_id\"), 1), MAX(\"diagram_id\") IS NOT NULL) FROM \"livebit_dbo\".\"sysdiagrams\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"tracker\"', 'trackerid'), COALESCE(MAX(\"trackerid\"), 1), MAX(\"trackerid\") IS NOT NULL) FROM \"livebit_dbo\".\"tracker\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"user\"', 'userid'), COALESCE(MAX(\"userid\"), 1), MAX(\"userid\") IS NOT NULL) FROM \"livebit_dbo\".\"user\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_dbo\".\"userindustry\"', 'userindustryid'), COALESCE(MAX(\"userindustryid\"), 1), MAX(\"userindustryid\") IS NOT NULL) FROM \"livebit_dbo\".\"userindustry\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_diva\".\"users\"', 'userid'), COALESCE(MAX(\"userid\"), 1), MAX(\"userid\") IS NOT NULL) FROM \"livebit_diva\".\"users\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"carddisplaypersubtab\"', 'carddisplayid'), COALESCE(MAX(\"carddisplayid\"), 1), MAX(\"carddisplayid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"carddisplaypersubtab\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"columninfo\"', 'columnid'), COALESCE(MAX(\"columnid\"), 1), MAX(\"columnid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"columninfo\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"columnvalue\"', 'columnvalueid'), COALESCE(MAX(\"columnvalueid\"), 1), MAX(\"columnvalueid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"columnvalue\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"companyinfo\"', 'companyid'), COALESCE(MAX(\"companyid\"), 1), MAX(\"companyid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"companyinfo\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"databaseconfig\"', 'databaseid'), COALESCE(MAX(\"databaseid\"), 1), MAX(\"databaseid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"databaseconfig\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"portaltabsconfig\"', 'tabid'), COALESCE(MAX(\"tabid\"), 1), MAX(\"tabid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"portaltabsconfig\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"proceduretabmapping\"', 'mappingid'), COALESCE(MAX(\"mappingid\"), 1), MAX(\"mappingid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"proceduretabmapping\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"sampledata\"', 'masterdataid'), COALESCE(MAX(\"masterdataid\"), 1), MAX(\"masterdataid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"sampledata\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"sampledata_sample\"', 'masterdataid'), COALESCE(MAX(\"masterdataid\"), 1), MAX(\"masterdataid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"sampledata_sample\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"storedprocedureaccess\"', 'accessid'), COALESCE(MAX(\"accessid\"), 1), MAX(\"accessid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"storedprocedureaccess\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"storedprocedureexecutionlog\"', 'procedurelogid'), COALESCE(MAX(\"procedurelogid\"), 1), MAX(\"procedurelogid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"storedprocedureexecutionlog\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"storedprocedureparameters\"', 'parameterid'), COALESCE(MAX(\"parameterid\"), 1), MAX(\"parameterid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"storedprocedureparameters\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"storedprocedures\"', 'procedureid'), COALESCE(MAX(\"procedureid\"), 1), MAX(\"procedureid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"storedprocedures\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"storedprocsubtaboperation\"', 'spstid'), COALESCE(MAX(\"spstid\"), 1), MAX(\"spstid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"storedprocsubtaboperation\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"subtabsconfig\"', 'subtabid'), COALESCE(MAX(\"subtabid\"), 1), MAX(\"subtabid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"subtabsconfig\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"tableinfo\"', 'tableid'), COALESCE(MAX(\"tableid\"), 1), MAX(\"tableid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"tableinfo\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"tablelist\"', 'id'), COALESCE(MAX(\"id\"), 1), MAX(\"id\") IS NOT NULL) FROM \"livebit_divaconfig\".\"tablelist\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divaconfig\".\"userroles\"', 'userroleid'), COALESCE(MAX(\"userroleid\"), 1), MAX(\"userroleid\") IS NOT NULL) FROM \"livebit_divaconfig\".\"userroles\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divadim\".\"dimcountry\"', 'countryid'), COALESCE(MAX(\"countryid\"), 1), MAX(\"countryid\") IS NOT NULL) FROM \"livebit_divadim\".\"dimcountry\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divadim\".\"dimelement\"', 'elementid'), COALESCE(MAX(\"elementid\"), 1), MAX(\"elementid\") IS NOT NULL) FROM \"livebit_divadim\".\"dimelement\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divadim\".\"dimmastercolumn\"', 'dimmastercolumnkey'), COALESCE(MAX(\"dimmastercolumnkey\"), 1), MAX(\"dimmastercolumnkey\") IS NOT NULL) FROM \"livebit_divadim\".\"dimmastercolumn\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divadim\".\"dimmastertable\"', 'dimmasterkey'), COALESCE(MAX(\"dimmasterkey\"), 1), MAX(\"dimmasterkey\") IS NOT NULL) FROM \"livebit_divadim\".\"dimmastertable\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_divadim\".\"dimplanet\"', 'planetid'), COALESCE(MAX(\"planetid\"), 1), MAX(\"planetid\") IS NOT NULL) FROM \"livebit_divadim\".\"dimplanet\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_zora\".\"click\"', 'click_id'), COALESCE(MAX(\"click_id\"), 1), MAX(\"click_id\") IS NOT NULL) FROM \"livebit_zora\".\"click\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_zora\".\"company\"', 'company_id'), COALESCE(MAX(\"company_id\"), 1), MAX(\"company_id\") IS NOT NULL) FROM \"livebit_zora\".\"company\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_zora\".\"domain\"', 'domain_id'), COALESCE(MAX(\"domain_id\"), 1), MAX(\"domain_id\") IS NOT NULL) FROM \"livebit_zora\".\"domain\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_zora\".\"link\"', 'link_id'), COALESCE(MAX(\"link_id\"), 1), MAX(\"link_id\") IS NOT NULL) FROM \"livebit_zora\".\"link\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_zora\".\"shorturl\"', 'url_id'), COALESCE(MAX(\"url_id\"), 1), MAX(\"url_id\") IS NOT NULL) FROM \"livebit_zora\".\"shorturl\";"
+    },
+    {
+      "file": "sequences.sql",
+      "kind": "sequences",
+      "ok": true,
+      "statement": "SELECT setval(pg_get_serial_sequence('\"livebit_zora\".\"users\"', 'user_id'), COALESCE(MAX(\"user_id\"), 1), MAX(\"user_id\") IS NOT NULL) FROM \"livebit_zora\".\"users\";"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_dbo\".\"facteval\" ADD CONSTRAINT \"facteval_fk_factsurveyresponses_dimsurvey1\" FOREIGN KEY (\"surveyid\") REFERENCES \"livebit_dbo\".\"survey\" (\"surveyid\") ON DELETE NO ACTION ON UPDATE NO ACTION NOT VALID;"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_dbo\".\"facteval\" ADD CONSTRAINT \"facteval_fk_factsurveyresponses_dimresponse1\" FOREIGN KEY (\"responseid\") REFERENCES \"livebit_dbo\".\"response\" (\"responseid\") ON DELETE NO ACTION ON UPDATE NO ACTION;"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_dbo\".\"facteval\" ADD CONSTRAINT \"facteval_fk_factsurveyresponses_dimuser1\" FOREIGN KEY (\"userid\") REFERENCES \"livebit_dbo\".\"user\" (\"userid\") ON DELETE NO ACTION ON UPDATE NO ACTION;"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_dbo\".\"question\" ADD CONSTRAINT \"question_fk_dimquestion_dimsurvey\" FOREIGN KEY (\"questionsurveyid\") REFERENCES \"livebit_dbo\".\"survey\" (\"surveyid\") ON DELETE NO ACTION ON UPDATE NO ACTION NOT VALID;"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_dbo\".\"response\" ADD CONSTRAINT \"response_fk_dimresponse_dimquestion\" FOREIGN KEY (\"responsequestionid\") REFERENCES \"livebit_dbo\".\"question\" (\"questionid\") ON DELETE NO ACTION ON UPDATE NO ACTION;"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_dbo\".\"survey\" ADD CONSTRAINT \"survey_fk_dimsurvey_dimsurveyproduct\" FOREIGN KEY (\"surveyproductid\") REFERENCES \"livebit_dbo\".\"surveygroup\" (\"surveyproductid\") ON DELETE NO ACTION ON UPDATE NO ACTION NOT VALID;"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_dbo\".\"user\" ADD CONSTRAINT \"user_fk_dimuser_dimcompany\" FOREIGN KEY (\"usercompanyid\") REFERENCES \"livebit_dbo\".\"company\" (\"companyid\") ON DELETE NO ACTION ON UPDATE NO ACTION;"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_dbo\".\"userindustry\" ADD CONSTRAINT \"userindustry_fk_userindustry_user\" FOREIGN KEY (\"userindustryuserid\") REFERENCES \"livebit_dbo\".\"user\" (\"userid\") ON DELETE NO ACTION ON UPDATE NO ACTION;"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_dbo\".\"userindustry\" ADD CONSTRAINT \"userindustry_fk_userindustry_industrytype\" FOREIGN KEY (\"userindustrytypeid\") REFERENCES \"livebit_dbo\".\"industrytype\" (\"industrytypeid\") ON DELETE NO ACTION ON UPDATE NO ACTION;"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_divaconfig\".\"userroles\" ADD CONSTRAINT \"userroles_fk__userroles__useri__6f8b439a\" FOREIGN KEY (\"userid\") REFERENCES \"livebit_diva\".\"users\" (\"userid\") ON DELETE NO ACTION ON UPDATE NO ACTION;"
+    },
+    {
+      "file": "foreign_keys.sql",
+      "kind": "foreign_keys",
+      "ok": true,
+      "statement": "ALTER TABLE \"livebit_divaconfig\".\"userroles\" ADD CONSTRAINT \"userroles_fk__userroles__rolei__707f67d3\" FOREIGN KEY (\"roleid\") REFERENCES \"livebit_divaconfig\".\"roles\" (\"roleid\") ON DELETE NO ACTION ON UPDATE NO ACTION;"
+    },
+    {
+      "file": "views/livebit_dbo__vwuser.sql",
+      "kind": "views",
+      "ok": true,
+      "statements": 1
+    },
+    {
+      "file": "views/livebit_dbo__vwassessment.sql",
+      "kind": "views",
+      "ok": false,
+      "statement": "CREATE OR REPLACE VIEW \"livebit_dbo\".\"vwassessment\" AS Select distinct --ID to Match with Evaluation Cast(s.surveyid as varchar(99))+'-'+Cast(q.questionid as varchar(99))+'-'+Cast(r.responseid as varchar(99)) as 'AssessmentID' --Assessment Group Details ,sg.surveyproductid, sg.surveyproductcatego...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"'AssessmentID'\"\nLINE 19: ...har(99))+'-'+Cast(r.responseid as varchar(99)) as 'Assessmen...\n                                                              ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "views/livebit_dbo__vwevaluation.sql",
+      "kind": "views",
+      "ok": false,
+      "statement": "CREATE OR REPLACE VIEW \"livebit_dbo\".\"vwevaluation\" AS SELECT evalid ,Cast(surveyid as varchar(99))+'-'+Cast(questionid as varchar(99))+'-'+Cast(responseid as varchar(99)) as 'AssessmentID' ,surveyid ,questionid ,responseid ,userid ,questionstartdisplaydatatime ,questionresponcesubmiteddatetime ,...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"'AssessmentID'\"\nLINE 9: ...rchar(99))+'-'+Cast(responseid as varchar(99)) as 'Assessmen...\n                                                             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_aidd__loadalltablecolumnvalues.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_aidd\".\"loadalltablecolumnvalues\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): cursor — port to a PL/pgSQL FOR loop or cursor [OPEN cur] -- REVIEW (manual): ...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"ON\"\nLINE 25:         SET NOCOUNT ON;\n                             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_aidd__loadcolumninfo.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_aidd\".\"loadcolumninfo\"(schema text, table text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): MERGE statement — rewrite as INSERT ... ON CONFLICT [MERGE] -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- RE...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"table\"\nLINE 5: ...TION \"livebit_aidd\".\"loadcolumninfo\"(schema text, table text...\n                                                             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_aidd__loadtableinfo.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_aidd\".\"loadtableinfo\"(viewname text, viewschemaname text DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WH...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"ON\"\nLINE 27:         SET NOCOUNT ON;\n                             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_aidd__loadviewinfo.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_aidd\".\"loadviewinfo\"(viewname text, viewschemaname text DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHE...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"ON\"\nLINE 26:         SET NOCOUNT ON;\n                             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__dms_factfinalstatsprep.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_factfinalstatsprep\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.DMS_FactFinalStatsPrep ---- --Select COunt(*) DELETE FROM [DMS_FactL2Monitor] Where ConfigValue='NULL' and IsSAP='1' and IsSQL='1' and I...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"[\"\nLINE 12:     DELETE FROM [DMS_FactL2Monitor]     Where ConfigValue='N...\n                         ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__dms_factl2perconfig.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_factl2perconfig\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): sp_exe...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"DECLARE\"\nLINE 317:     DECLARE sql NVARCHAR(400)\n              ^\nCONTEXT:  invalid type name \"INT\n    DECLARE sql NVARCHAR(400)\n    DECLARE loadrundatetime DATETIME \"",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__dms_loadcustmonitorconfig.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_loadcustmonitorconfig\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.DMS_LoadCustMonitorConfig ---- begin Truncate Table [dbo].[DMS_CustMonitorConfig]; SET IDENTITY_INSERT [dbo].[DMS_CustMonitorConfig] ...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"[\"\nLINE 12:     Truncate Table [dbo].[DMS_CustMonitorConfig];\n                            ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__dms_postrunacn.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_postrunacn\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 100] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 100] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 100] -- REVIEW (manua...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 241:     SET IDENTITY_INSERT dbo.FactL2Monitor_ACN ON;\n                                                          ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__dms_postrunmedicineconfig.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_postrunmedicineconfig\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 50] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 20] -- ---- converted from T-SQL procedure dbo.DMS_PostRunMedicineCo...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 146: ...SET IDENTITY_INSERT dbo.DMS_FactL2Monitor_MedicineConfig ON;\n                                                                        ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__dms_postrunmedicinepurchasetype.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_postrunmedicinepurchasetype\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] --...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 138: ...ENTITY_INSERT dbo.DMS_FactL2Monitor_MedicinePurchaseType ON;\n                                                                        ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__dms_postrunpatientconfig.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_postrunpatientconfig\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] -- REVIEW (manual): TOP n — rewrite as LIMIT n [Top 10] -- REVIEW...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 46:         ADD PatientName VARCHAR(100);\n                                             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__dms_postrunsalesposition.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"dms_postrunsalesposition\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.DMS_PostRunSalesPosition ---- Begin IF OBJECT_ID('dbo.INFA_C_BO_CUST_EXT_XREF_base', 'U') IS NOT NULL BEGIN DROP TABLE dbo.INFA_C_BO_C...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 180:     SET IDENTITY_INSERT dbo.FactL2Monitor_SalesPosition ON;\n                                                                    ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__fn_diagramobjects.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"fn_diagramobjects\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.fn_diagramobjects ---- N'dbo' AS BEGIN declare id_upgraddiagrams int declare id_sysdiagrams int declare id_helpdiagrams int declare id_helpdi...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"N\"\nLINE 11:     N'dbo'\n             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__getsurveyquestionsandresponses.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"getsurveyquestionsandresponses\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): cursor — port to a PL/pgSQL FOR loop or cursor [OPEN question_cursor] -- REVIEW (manual): cursor — port to a PL/pgSQL FOR loop or curso...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"TABLE\"\nLINE 18:         DECLARE result TABLE (\n                                ^\nCONTEXT:  invalid type name \"TABLE (\n            Question NVARCHAR(MAX),\n            GroupText NVARCHAR(MAX),\n            Response NVARCHAR(MAX),\n            Sort INT,\n            ShortDescription NVARCHAR(MAX),\n            LargeDescription NVARCHAR(MAX),\n            IsTopBoxChoice BIT,\n            IsBottomBoxChoice BIT,\n            IsAverageChoice BIT,\n            Weightage INT\n        )\"",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__logexecutiondetails.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"logexecutiondetails\"(procedurename text DEFAULT NULL, parameterdetails text DEFAULT NULL, openaistepname text DEFAULT NULL, openaiparameterdetails text DEFAULT NULL, openaiprompt text DEFAULT NULL, additionalloggingdetails text DEFAULT NULL, status text, ...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"OUTPUT\"\nLINE 5: ...age text DEFAULT NULL, logid integer DEFAULT NULL OUTPUT, ex...\n                                                             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__populatedatedimension.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"populatedatedimension\"(startdate date DEFAULT '20240101', numberofyears integer DEFAULT 2) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.PopulateDateDimension ---- --exec PopulateDateDimension '20250101',1 --...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"7\"\nLINE 15:         SET DATEFIRST 7;\n                               ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__responseisaveragechoice.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"responseisaveragechoice\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.ResponseIsAverageChoice ---- BEGIN Declare responseistopboxchoice varchar(50), responseisbottomboxchoice varchar(50), r...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \",\"\nLINE 12:         Declare responseistopboxchoice varchar(50), response...\n                                                           ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__responseisbottomboxchoice.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"responseisbottomboxchoice\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.ResponseIsBottomBoxChoice ---- BEGIN Declare responseistopboxchoice varchar(50), responseisbottomboxchoice varchar(50...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \",\"\nLINE 12:         Declare responseistopboxchoice varchar(50), response...\n                                                           ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__responseistopboxchoice.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"responseistopboxchoice\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.ResponseIsTopBoxChoice ---- BEGIN Declare responseistopboxchoice varchar(50), responseisbottomboxchoice varchar(50), res...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \",\"\nLINE 12:         Declare responseistopboxchoice varchar(50), response...\n                                                           ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__responseweightage.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"responseweightage\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.ResponseWeightage ---- BEGIN Declare responseistopboxchoice varchar(50), responseisbottomboxchoice varchar(50), responseisave...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \",\"\nLINE 12:         Declare responseistopboxchoice varchar(50), response...\n                                                           ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__sp_alterdiagram.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_alterdiagram\"(diagramname text, owner_id integer DEFAULT null, version integer, definition bytea) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_alterdiagram ---- 'dbo' AS BEGIN set nocount on declare th...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "input parameters after one with a default value must also have defaults",
+      "sqlstate": "42P13",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__sp_creatediagram.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_creatediagram\"(diagramname text, owner_id integer DEFAULT null, version integer, definition bytea) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_creatediagram ---- 'dbo' AS BEGIN set nocount on declare ...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "input parameters after one with a default value must also have defaults",
+      "sqlstate": "42P13",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__sp_dropdiagram.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_dropdiagram\"(diagramname text, owner_id integer DEFAULT null) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_dropdiagram ---- 'dbo' AS BEGIN set nocount on declare theid int declare isdbo int declare uid...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"'dbo'\"\nLINE 11:     'dbo'\n             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__sp_helpdiagramdefinition.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_helpdiagramdefinition\"(diagramname text, owner_id integer DEFAULT null) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_helpdiagramdefinition ---- N'dbo' AS BEGIN set nocount on declare theid int declare ...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"N\"\nLINE 11:     N'dbo'\n             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__sp_helpdiagrams.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_helpdiagrams\"(diagramname text DEFAULT NULL, owner_id integer DEFAULT NULL) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_helpdiagrams ---- N'dbo' AS BEGIN DECLARE user sysname DECLARE dbologin bit EXEC...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"N\"\nLINE 11:     N'dbo'\n             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__sp_renamediagram.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_renamediagram\"(diagramname text, owner_id integer DEFAULT null, new_diagramname text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_renamediagram ---- 'dbo' AS BEGIN set nocount on declare theid int dec...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "input parameters after one with a default value must also have defaults",
+      "sqlstate": "42P13",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__sp_survey_assessment_rpt.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_survey_assessment_rpt\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_survey_assessment_rpt ---- begin Select distinct [QuestionShortText],[QuestionShortAbbrev] ---,r.ResponseText,[ResponceDescriptionT...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"[\"\nLINE 13:     [QuestionShortText],[QuestionShortAbbrev]\n             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__sp_ui_evalsubmit.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_ui_evalsubmit\"(surveyid integer, questionid integer, responseid integer, userid integer, questionstartdisplaydatatime timestamp, questionresponcesubmiteddatetime timestamp) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TOP n — r...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"ON\"\nLINE 13:         SET NOCOUNT ON;\n                             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__sp_upgraddiagrams.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"sp_upgraddiagrams\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.sp_upgraddiagrams ---- BEGIN IF OBJECT_ID(N'dbo.sysdiagrams') IS NOT NULL return 0; CREATE TABLE dbo.sysdiagrams ( name sysname NOT NULL, pri...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 13:        return 0;\n                        ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_dbo__test.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_dbo\".\"test\"(surveyid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure dbo.Test ---- begin select dbo.ResponseIsTopBoxChoice(surveyid) as ResponseIsTopBoxChoice ,dbo.ResponseIsBottomBoxChoice(surveyid) as Response...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"end\"\nLINE 19:     end\n             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__load1tablecolumnvalue.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"load1tablecolumnvalue\"(inputfulltablename text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): MERGE statement — rewrite as INSERT ... ON CONFLICT [MERGE] -- REVIEW (manual): MERGE statement — rewrite as INSERT ... ON CONFLIC...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 34: ...input parameter inputfulltablename cannot be NULL.', 16, 1);\n                                                                       ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadalltablecolumnvalue.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadalltablecolumnvalue\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): IDENTITY(...) in a query — verify sequence semantics [IDENTITY(] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- ----...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "missing \"THEN\" at end of SQL expression\nLINE 15:             DROP TABLE [divaconfig].[TableList]; -- Drop the...\n                                                        ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadcolumninfo.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadcolumninfo\"(schemaname text, tablename text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- ---- converted from T-SQL procedure divaconfig.LoadColumnInfo ---- ...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"ON\"\nLINE 13:         SET NOCOUNT ON;\n                             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadcompanyinfocardchart.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadcompanyinfocardchart\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): MERGE statement — rewrite as INSERT ... ON CONFLICT [MERGE] -- ---- converted from T-SQL procedure divaconfig.loadCompanyInfoCardChart ---- MERGE INTO...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"[\"\nLINE 12:     MERGE INTO [divaconfig].[CardDisplayPerSubtab] AS target\n                        ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__loaddivametadata.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loaddivametadata\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure divaconfig.LoadDIVAMetadata ---- exec [divaconfig].[LoadTableInfo] --Select * from [divaconfig].[TableInfo]Where TableName like '%SampleEmp...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "\"exec\" is not a known variable\nLINE 11:     exec [divaconfig].[LoadTableInfo]\n             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadspecialtablecardchart.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadspecialtablecardchart\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): MERGE statement — rewrite as INSERT ... ON CONFLICT [MERGE] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- ---- co...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"[\"\nLINE 13:     MERGE INTO [divaconfig].[CardDisplayPerSubtab] AS target\n                        ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadstoredprocedures.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadstoredprocedures\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- ---- converte...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"[\"\nLINE 125:         dbo.[User] u; -- Combine all procedures with all use...\n                      ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__loadtableinfo.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"loadtableinfo\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual): TRY/C...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"ON\"\nLINE 22:         SET NOCOUNT ON;\n                             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__masterexecuteprocedure.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"masterexecuteprocedure\"(userid integer, subtabid integer, procedurename text, parameters text DEFAULT NULL, debug boolean DEFAULT 0 -- Set this to 1 for debugging) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql ...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"RETURNS\"\nLINE 6: RETURNS void\n        ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_dynamiccrud.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_dynamiccrud\"(inputschematable text, inputoperationtype text, inputcsvvalues text, debug boolean DEFAULT 0 -- Debug flag (1 = show details) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... ...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"RETURNS\"\nLINE 6: RETURNS void\n        ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_dynamiccrudold.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_dynamiccrudold\"(inputschematable text, inputoperationtype text, inputcsvvalues text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): sp_executesql — port to EXECUTE ... USING [sp_executesql] -- REVIEW (manual): sp_executesq...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "type \"nvarchar\" does not exist\nLINE 24:      Declare schematable NVARCHAR(256), -- Format: 'schema.t...\n                                  ^",
+      "sqlstate": "42704",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_get1columnvaluedata.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_get1columnvaluedata\"(schematable text, columnname text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- REVIEW (manual): string concatenation with '+' — use '||'...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "type \"nvarchar\" does not exist\nLINE 26:         DECLARE schemaname NVARCHAR(255);\n                                    ^",
+      "sqlstate": "42704",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_getallcolumnvaluedata.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_getallcolumnvaluedata\"(schematable text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "type \"nvarchar\" does not exist\nLINE 26:         DECLARE schemaname NVARCHAR(255);\n                                    ^",
+      "sqlstate": "42704",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_getcolumnmetadata.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_getcolumnmetadata\"(schematable text) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] ...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "type \"nvarchar\" does not exist\nLINE 27:         DECLARE schemaname NVARCHAR(255);\n                                    ^",
+      "sqlstate": "42704",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_getstoredprocedurelog.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_getstoredprocedurelog\"(proceduretabid integer, procedureid integer) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure divaconfig.sp_GetStoredProcedureLog ---- SELECT [ProcedureExecutionStatus] AS 'Status', ...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "\"select\" is not a known variable\nLINE 11:     SELECT   \n             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__sp_gettables.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"sp_gettables\"(schemaname text DEFAULT NULL, tablename text DEFAULT NULL, schematablecsv text DEFAULT NULL -- Optional: Comma-separated schema.table combinations) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatena...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"RETURNS\"\nLINE 6: RETURNS void\n        ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__usplogcustomsp.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"usplogcustomsp\"(inputstoredprocedureexecutionid text, inputstoredprocedurename text, inputtransactiontype text, inputbatchid bigint, inputstoredprocedureparameterall text, executioncontext text DEFAULT NULL, executionsqcontext integer DEFAULT NULL,...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "type \"datetime2\" does not exist\nLINE 20:         DECLARE starttime          DATETIME2 = (now() at tim...\n                                            ^",
+      "sqlstate": "42704",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__uspsampleerrorprocessdata.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"uspsampleerrorprocessdata\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (ma...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "type \"uniqueidentifier\" does not exist\nLINE 17:         DECLARE executionid UNIQUEIDENTIFIER = gen_random_uu...\n                                     ^",
+      "sqlstate": "42704",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__uspsamplemainprocess.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"uspsamplemainprocess\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual)...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "type \"uniqueidentifier\" does not exist\nLINE 17:         DECLARE executionid UNIQUEIDENTIFIER = gen_random_uu...\n                                     ^",
+      "sqlstate": "42704",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divaconfig__uspsampleprocessdata.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divaconfig\".\"uspsampleprocessdata\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual): TRY/CATCH — port to BEGIN ... EXCEPTION WHEN OTHERS [TRY] -- REVIEW (manual)...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "type \"uniqueidentifier\" does not exist\nLINE 17:         DECLARE executionid UNIQUEIDENTIFIER = gen_random_uu...\n                                     ^",
+      "sqlstate": "42704",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divadim__loaddatedimension.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divadim\".\"loaddatedimension\"(startdate date DEFAULT '20250101', numberofyears integer DEFAULT 1) RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- ---- converted from T-SQL procedure divadim.LoadDateDimension ---- --exec divadim.LoadDateDimension '20200101',...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"7\"\nLINE 15:         SET DATEFIRST 7;\n                               ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    },
+    {
+      "file": "routines/livebit_divadim__loaddatedimension_combined.sql",
+      "kind": "routines",
+      "ok": false,
+      "statement": "CREATE OR REPLACE FUNCTION \"livebit_divadim\".\"loaddatedimension_combined\"() RETURNS void LANGUAGE plpgsql AS $function$ BEGIN -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- REVIEW (manual): string concatenation with '+' — use '||' in Postgres [+ '] -- ---- conve...",
+      "statement_index": 1,
+      "statements": 1,
+      "error": "syntax error at or near \"IF\"\nLINE 17:     IF OBJECT_ID('divadim.DateDimension_Combined', 'U') IS N...\n             ^",
+      "sqlstate": "42601",
+      "attempts": 2
+    }
+  ]
+}
